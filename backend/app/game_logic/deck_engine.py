@@ -216,13 +216,17 @@ class DeckEngine(GameEngine):
         return events
 
     def _advance_turn(self):
+        if not self.turn_order:
+            return
+
         alive = [pid for pid in self.turn_order if pid not in self.eliminated]
         if not alive:
             return
 
         # Find next alive player with cards
+        max_iters = len(self.turn_order)
         attempts = 0
-        while attempts < len(alive):
+        while attempts < max_iters:
             self.current_turn_idx = (self.current_turn_idx + 1) % len(self.turn_order)
             current = self.turn_order[self.current_turn_idx]
             if current not in self.eliminated and len(self.hands.get(current, [])) > 0:
@@ -271,7 +275,7 @@ class DeckEngine(GameEngine):
         }
 
     def get_current_player_id(self) -> str | None:
-        if not self.turn_order:
+        if not self.turn_order or self.current_turn_idx >= len(self.turn_order):
             return None
         return self.turn_order[self.current_turn_idx]
 

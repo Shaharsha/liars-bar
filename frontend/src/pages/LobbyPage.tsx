@@ -12,6 +12,7 @@ export default function LobbyPage() {
   const [tableName, setTableName] = useState('')
   const [gameMode, setGameMode] = useState<'deck' | 'dice'>('deck')
   const [showInfo, setShowInfo] = useState<'deck' | 'dice' | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadTables()
@@ -21,16 +22,26 @@ export default function LobbyPage() {
 
   const handleCreate = async () => {
     if (!tableName.trim()) return
-    const data = await createTable(tableName.trim(), gameMode)
-    if (data.table) {
-      navigate(`/table/${data.table.table_id}`)
+    setError(null)
+    try {
+      const data = await createTable(tableName.trim(), gameMode)
+      if (data.table) {
+        navigate(`/table/${data.table.table_id}`)
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to create table')
     }
   }
 
   const handleJoin = async (tableId: string) => {
-    const data = await joinTable(tableId)
-    if (data.table) {
-      navigate(`/table/${data.table.table_id}`)
+    setError(null)
+    try {
+      const data = await joinTable(tableId)
+      if (data.table) {
+        navigate(`/table/${data.table.table_id}`)
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to join table')
     }
   }
 
@@ -41,6 +52,13 @@ export default function LobbyPage() {
         <h1 className="text-xl font-accent text-accent-gold">LIAR'S BAR</h1>
         <span className="text-text-secondary text-sm bg-bg-surface px-3 py-1 rounded-full">{nickname}</span>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="px-4 pt-3">
+          <p className="text-accent-red text-sm text-center">{error}</p>
+        </div>
+      )}
 
       {/* Table list */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">

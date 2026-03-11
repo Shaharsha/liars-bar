@@ -201,13 +201,20 @@ class DiceEngine(GameEngine):
         return events
 
     def _advance_turn(self):
+        if not self.turn_order:
+            return
+
         alive = [pid for pid in self.turn_order if pid not in self.eliminated]
         if not alive:
             return
-        while True:
+
+        max_iters = len(self.turn_order)
+        attempts = 0
+        while attempts < max_iters:
             self.current_turn_idx = (self.current_turn_idx + 1) % len(self.turn_order)
             if self.turn_order[self.current_turn_idx] not in self.eliminated:
                 break
+            attempts += 1
 
     def get_state_for_player(self, player_id: str) -> dict:
         return {

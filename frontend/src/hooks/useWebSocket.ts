@@ -59,6 +59,8 @@ export function useWebSocket(tableId: string) {
     return () => {
       unsubs.forEach((fn) => fn())
       wsClient.disconnect()
+      useTableStore.getState().clear()
+      useGameStore.getState().clear()
     }
   }, [tableId, sessionId])
 }

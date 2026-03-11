@@ -1,20 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSessionStore } from '../stores/session'
 
 export default function NicknamePage() {
   const [nickname, setNickname] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const createSession = useSessionStore((s) => s.createSession)
+  const sessionId = useSessionStore((s) => s.sessionId)
+  const loading = useSessionStore((s) => s.loading)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!loading && sessionId) navigate('/lobby', { replace: true })
+  }, [loading, sessionId, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!nickname.trim() || nickname.trim().length < 2) return
     setIsLoading(true)
+    setError(null)
     try {
       await createSession(nickname.trim())
       navigate('/lobby')
+    } catch (err: any) {
+      setError(err.message || 'Failed to create session')
     } finally {
       setIsLoading(false)
     }
@@ -49,6 +59,9 @@ export default function NicknamePage() {
               autoFocus
             />
           </div>
+          {error && (
+            <p className="text-accent-red text-sm text-center">{error}</p>
+          )}
           <button
             type="submit"
             disabled={!nickname.trim() || nickname.trim().length < 2 || isLoading}

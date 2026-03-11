@@ -13,7 +13,15 @@ async def websocket_endpoint(websocket: WebSocket, table_id: str, session_id: st
         return
 
     await websocket.accept()
-    connection_manager.connect(session_id, websocket, table_id)
+    await connection_manager.connect(session_id, websocket, table_id)
+
+    # Mark player as connected
+    table = table_manager.get_table(table_id)
+    if table:
+        for p in table.players:
+            if p.session_id == session_id:
+                p.is_connected = True
+                break
 
     try:
         # Send initial table state
@@ -38,7 +46,14 @@ async def websocket_endpoint(websocket: WebSocket, table_id: str, session_id: st
             await handle_client_event(event, session_id, table_id)
 
     except WebSocketDisconnect:
-        connection_manager.disconnect(session_id)
+        await connection_manager.disconnect(session_id)
+        # Mark player as disconnected
+        table = table_manager.get_table(table_id)
+        if table:
+            for p in table.players:
+                if p.session_id == session_id:
+                    p.is_connected = False
+                    break
         # Handle player leaving
         table = table_manager.get_table(table_id)
         if table and table.status == "waiting":

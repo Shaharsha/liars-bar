@@ -114,7 +114,13 @@ export default function GamePage() {
 
 function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn: boolean }) {
   const [selectedCards, setSelectedCards] = useState<number[]>([])
+  const [pending, setPending] = useState(false)
   const canCallLiar = isMyTurn && gameState.last_play !== null
+
+  // Reset pending when a new game state arrives
+  useEffect(() => {
+    setPending(false)
+  }, [gameState])
 
   const toggleCard = (index: number) => {
     setSelectedCards((prev) => {
@@ -125,12 +131,15 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
   }
 
   const handlePlay = () => {
-    if (selectedCards.length === 0) return
+    if (selectedCards.length === 0 || pending) return
+    setPending(true)
     wsClient.send('play_cards', { cards: selectedCards })
     setSelectedCards([])
   }
 
   const handleCallLiar = () => {
+    if (pending) return
+    setPending(true)
     wsClient.send('call_liar')
   }
 
@@ -193,7 +202,7 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
       <div className="flex gap-3 px-4 py-4 border-t border-border-subtle">
         <button
           onClick={handlePlay}
-          disabled={!isMyTurn || selectedCards.length === 0}
+          disabled={!isMyTurn || selectedCards.length === 0 || pending}
           className="flex-1 bg-gradient-to-r from-accent-gold/90 to-accent-gold rounded-xl py-3 text-bg-primary font-bold uppercase disabled:opacity-30 active:scale-[0.98] transition-all"
         >
           Play {selectedCards.length || ''} Card{selectedCards.length !== 1 ? 's' : ''}
@@ -201,7 +210,8 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
         {canCallLiar && (
           <button
             onClick={handleCallLiar}
-            className="flex-1 bg-accent-red/10 border border-accent-red/50 text-accent-red rounded-xl py-3 font-accent font-bold text-lg uppercase glow-red active:scale-[0.98] transition-all"
+            disabled={pending}
+            className="flex-1 bg-accent-red/10 border border-accent-red/50 text-accent-red rounded-xl py-3 font-accent font-bold text-lg uppercase glow-red active:scale-[0.98] transition-all disabled:opacity-30"
             style={{ animation: 'pulse-gold 2s infinite' }}
           >
             LIAR!
@@ -217,7 +227,13 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
 function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn: boolean }) {
   const [bidQuantity, setBidQuantity] = useState(gameState.current_bid ? gameState.current_bid.quantity : 1)
   const [bidFace, setBidFace] = useState(gameState.current_bid ? gameState.current_bid.face_value : 2)
+  const [pending, setPending] = useState(false)
   const canChallenge = isMyTurn && gameState.current_bid !== null
+
+  // Reset pending when a new game state arrives
+  useEffect(() => {
+    setPending(false)
+  }, [gameState])
 
   const diceEmoji = (val: number) => ['', '\u2680', '\u2681', '\u2682', '\u2683', '\u2684', '\u2685'][val] || '?'
 
@@ -230,11 +246,14 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
   }
 
   const handleBid = () => {
-    if (!isValidBid()) return
+    if (!isValidBid() || pending) return
+    setPending(true)
     wsClient.send('place_bid', { quantity: bidQuantity, face_value: bidFace })
   }
 
   const handleChallenge = () => {
+    if (pending) return
+    setPending(true)
     wsClient.send('challenge_bid')
   }
 
@@ -314,7 +333,7 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
           <div className="flex gap-3">
             <button
               onClick={handleBid}
-              disabled={!isValidBid()}
+              disabled={!isValidBid() || pending}
               className="flex-1 bg-gradient-to-r from-accent-gold/90 to-accent-gold rounded-xl py-3 text-bg-primary font-bold uppercase disabled:opacity-30 active:scale-[0.98] transition-all"
             >
               Bid {bidQuantity}{'\u00D7'} {diceEmoji(bidFace)}
@@ -322,7 +341,8 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
             {canChallenge && (
               <button
                 onClick={handleChallenge}
-                className="flex-1 bg-accent-red/10 border border-accent-red/50 text-accent-red rounded-xl py-3 font-bold uppercase glow-red active:scale-[0.98] transition-all"
+                disabled={pending}
+                className="flex-1 bg-accent-red/10 border border-accent-red/50 text-accent-red rounded-xl py-3 font-bold uppercase glow-red active:scale-[0.98] transition-all disabled:opacity-30"
               >
                 Challenge!
               </button>

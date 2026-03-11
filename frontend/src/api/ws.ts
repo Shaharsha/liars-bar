@@ -62,6 +62,7 @@ class WebSocketClient {
     this.ws?.close()
     this.ws = null
     this.reconnectAttempts = 0
+    this.listeners.clear()
   }
 }
 

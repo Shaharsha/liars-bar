@@ -7,16 +7,19 @@ export async function createSession(nickname: string) {
     credentials: 'include',
     body: JSON.stringify({ nickname }),
   })
+  if (!res.ok) throw new Error(res.statusText)
   return res.json()
 }
 
 export async function getSession() {
   const res = await fetch(`${BASE_URL}/api/session`, { credentials: 'include' })
+  if (!res.ok) throw new Error(res.statusText)
   return res.json()
 }
 
 export async function fetchTables() {
   const res = await fetch(`${BASE_URL}/api/tables`, { credentials: 'include' })
+  if (!res.ok) throw new Error(res.statusText)
   return res.json()
 }
 
@@ -27,6 +30,7 @@ export async function createTable(name: string, game_mode: 'deck' | 'dice') {
     credentials: 'include',
     body: JSON.stringify({ name, game_mode }),
   })
+  if (!res.ok) throw new Error(res.statusText)
   return res.json()
 }
 
@@ -35,5 +39,6 @@ export async function joinTable(tableId: string) {
     method: 'POST',
     credentials: 'include',
   })
+  if (!res.ok) throw new Error(res.statusText)
   return res.json()
 }

@@ -9,16 +9,16 @@ interface LobbyState {
   setTables: (tables: TableSummary[]) => void
 }
 
-export const useLobbyStore = create<LobbyState>((set) => ({
+export const useLobbyStore = create<LobbyState>((set, get) => ({
   tables: [],
   isLoading: false,
 
   loadTables: async () => {
-    set({ isLoading: true })
+    if (get().tables.length === 0) set({ isLoading: true })
     try {
       const data = await fetchTables()
-      set({ tables: data.tables || [] })
-    } finally {
+      set({ tables: data.tables || [], isLoading: false })
+    } catch {
       set({ isLoading: false })
     }
   },

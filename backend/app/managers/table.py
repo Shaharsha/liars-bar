@@ -7,29 +7,31 @@ class TableManager:
         self.tables: dict[str, Table] = {}
         self._lock = asyncio.Lock()
 
-    def create_table(self, name: str, game_mode: GameMode, host_session_id: str, host_nickname: str) -> Table:
-        table = Table(
-            name=name,
-            game_mode=game_mode,
-            host_session_id=host_session_id,
-            players=[Player(session_id=host_session_id, nickname=host_nickname)],
-        )
-        self.tables[table.table_id] = table
-        return table
+    async def create_table(self, name: str, game_mode: GameMode, host_session_id: str, host_nickname: str) -> Table:
+        async with self._lock:
+            table = Table(
+                name=name,
+                game_mode=game_mode,
+                host_session_id=host_session_id,
+                players=[Player(session_id=host_session_id, nickname=host_nickname)],
+            )
+            self.tables[table.table_id] = table
+            return table
 
-    def join_table(self, table_id: str, session_id: str, nickname: str) -> Table | None:
-        table = self.tables.get(table_id)
-        if not table:
-            return None
-        if table.status != TableStatus.WAITING:
-            return None
-        if len(table.players) >= table.max_players:
-            return None
-        if any(p.session_id == session_id for p in table.players):
-            return table  # Already in table
+    async def join_table(self, table_id: str, session_id: str, nickname: str) -> Table | None:
+        async with self._lock:
+            table = self.tables.get(table_id)
+            if not table:
+                return None
+            if table.status != TableStatus.WAITING:
+                return None
+            if len(table.players) >= table.max_players:
+                return None
+            if any(p.session_id == session_id for p in table.players):
+                return table  # Already in table
 
-        table.players.append(Player(session_id=session_id, nickname=nickname))
-        return table
+            table.players.append(Player(session_id=session_id, nickname=nickname))
+            return table
 
     def leave_table(self, table_id: str, session_id: str) -> Table | None:
         table = self.tables.get(table_id)

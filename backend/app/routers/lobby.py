@@ -5,6 +5,7 @@ from typing import Optional
 
 from app.managers.table import table_manager
 from app.models.table import GameMode
+from app.config import settings
 
 router = APIRouter()
 
@@ -27,6 +28,7 @@ async def create_session(req: CreateSessionRequest, response: Response):
         value=session_id,
         httponly=True,
         samesite="lax",
+        secure=settings.env == "prod",
         max_age=86400,
     )
     return {"session_id": session_id, "nickname": req.nickname}
@@ -46,7 +48,7 @@ async def create_table(req: CreateTableRequest, session_id: Optional[str] = Cook
     if not session_id or session_id not in sessions:
         return {"error": "No session"}, 401
     nickname = sessions[session_id]["nickname"]
-    table = table_manager.create_table(
+    table = await table_manager.create_table(
         name=req.name,
         game_mode=req.game_mode,
         host_session_id=session_id,
@@ -59,7 +61,7 @@ async def join_table(table_id: str, session_id: Optional[str] = Cookie(None)):
     if not session_id or session_id not in sessions:
         return {"error": "No session"}, 401
     nickname = sessions[session_id]["nickname"]
-    table = table_manager.join_table(table_id, session_id, nickname)
+    table = await table_manager.join_table(table_id, session_id, nickname)
     if table is None:
         return {"error": "Table full or not found"}, 400
     return {"table": table.model_dump()}
