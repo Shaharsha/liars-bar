@@ -21,10 +21,12 @@ class DeckEngine(GameEngine):
         self.round_number: int = 0
         self.discard_pile: list[str] = []
         self.nicknames: dict[str, str] = {}
+        self.avatars: dict[str, str] = {}
 
-    def initialize(self, player_ids: list[str], nicknames: dict[str, str] = None) -> list[tuple[str, ServerEvent]]:
+    def initialize(self, player_ids: list[str], nicknames: dict[str, str] = None, avatars: dict[str, str] = None) -> list[tuple[str, ServerEvent]]:
         self.player_ids = player_ids
         self.nicknames = nicknames or {}
+        self.avatars = avatars or {}
         self.revolvers = {pid: Revolver() for pid in player_ids}
         return self._start_round()
 
@@ -207,6 +209,7 @@ class DeckEngine(GameEngine):
                 data={
                     "winner_id": winner,
                     "winner_nickname": self.nicknames.get(winner, "Unknown") if winner else None,
+                    "winner_avatar": self.avatars.get(winner, "fox") if winner else None,
                 }
             )))
         else:
@@ -266,6 +269,7 @@ class DeckEngine(GameEngine):
                 {
                     "session_id": pid,
                     "nickname": self.nicknames.get(pid, "Unknown"),
+                    "avatar": self.avatars.get(pid, "fox"),
                     "is_alive": pid not in self.eliminated,
                     "revolver": self.revolvers[pid].get_state() if pid in self.revolvers else None,
                 }

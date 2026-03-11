@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { useLobbyStore } from '../stores/lobby'
 import { useSessionStore } from '../stores/session'
 import { createTable, joinTable } from '../api/http'
+import AnimalAvatar from '../components/AnimalAvatar'
 
 export default function LobbyPage() {
   const { tables, isLoading, loadTables } = useLobbyStore()
-  const { nickname } = useSessionStore()
+  const { nickname, avatar } = useSessionStore()
   const navigate = useNavigate()
   const [showCreate, setShowCreate] = useState(false)
   const [tableName, setTableName] = useState('')
@@ -54,9 +55,7 @@ export default function LobbyPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-accent text-accent-gold tracking-wider">LIAR'S BAR</h1>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent-gold/30 to-accent-gold/10 flex items-center justify-center text-[11px] font-bold text-accent-gold border border-accent-gold/20">
-              {nickname?.[0]?.toUpperCase()}
-            </div>
+            <AnimalAvatar avatar={avatar || 'fox'} size={28} />
             <span className="text-text-secondary text-sm">{nickname}</span>
           </div>
         </div>
@@ -151,7 +150,8 @@ export default function LobbyPage() {
             {/* Player pills */}
             <div className="flex flex-wrap items-center gap-1.5 mb-3">
               {table.player_nicknames.map((name, i) => (
-                <span key={i} className="text-[11px] bg-bg-elevated/60 text-text-secondary px-2 py-0.5 rounded-full border border-border-subtle/50">
+                <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-bg-elevated/60 text-text-secondary pl-0.5 pr-2 py-0.5 rounded-full border border-border-subtle/50">
+                  <AnimalAvatar avatar={table.player_avatars?.[i] || 'fox'} size={18} />
                   {name}
                 </span>
               ))}

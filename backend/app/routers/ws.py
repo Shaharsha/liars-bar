@@ -46,7 +46,7 @@ def _build_table_state(table) -> dict:
         "game_mode": table.game_mode,
         "status": table.status,
         "host_session_id": table.host_session_id,
-        "players": [{"session_id": p.session_id, "nickname": p.nickname} for p in table.players],
+        "players": [{"session_id": p.session_id, "nickname": p.nickname, "avatar": p.avatar} for p in table.players],
         "max_players": table.max_players,
     }
 
@@ -88,11 +88,12 @@ async def websocket_endpoint(websocket: WebSocket, table_id: str, session_id: st
             session_data = sessions.get(session_id)
             if session_data:
                 nickname = session_data["nickname"]
+                avatar = session_data.get("avatar", "fox")
                 from app.models.player import Player
-                table.players.append(Player(session_id=session_id, nickname=nickname))
+                table.players.append(Player(session_id=session_id, nickname=nickname, avatar=avatar))
                 await connection_manager.broadcast_to_table(table_id, ServerEvent(
                     event="player_joined",
-                    data={"session_id": session_id, "nickname": nickname}
+                    data={"session_id": session_id, "nickname": nickname, "avatar": avatar}
                 ), exclude={session_id})
 
     try:

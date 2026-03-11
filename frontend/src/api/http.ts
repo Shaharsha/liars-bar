@@ -1,11 +1,11 @@
 const BASE_URL = ''
 
-export async function createSession(nickname: string) {
+export async function createSession(nickname: string, avatar: string = 'fox') {
   const res = await fetch(`${BASE_URL}/api/session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ nickname }),
+    body: JSON.stringify({ nickname, avatar }),
   })
   if (!res.ok) throw new Error(res.statusText)
   return res.json()

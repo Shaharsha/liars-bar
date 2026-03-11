@@ -32,3 +32,4 @@ class TableSummary(BaseModel):
     player_count: int
     max_players: int
     player_nicknames: list[str]
+    player_avatars: list[str]

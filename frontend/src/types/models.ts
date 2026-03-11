@@ -1,6 +1,7 @@
 export interface Player {
   session_id: string
   nickname: string
+  avatar?: string
   is_alive?: boolean
   revolver?: { chambers: number; shots_fired: number }
 }
@@ -23,6 +24,7 @@ export interface TableSummary {
   player_count: number
   max_players: number
   player_nicknames: string[]
+  player_avatars: string[]
 }
 
 export interface DeckGameState {

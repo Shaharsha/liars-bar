@@ -13,6 +13,7 @@ class GameManager:
 
         player_ids = [p.session_id for p in table.players]
         nicknames = {p.session_id: p.nickname for p in table.players}
+        avatars = {p.session_id: p.avatar for p in table.players}
 
         if table.game_mode == GameMode.DECK:
             engine = DeckEngine()
@@ -20,7 +21,7 @@ class GameManager:
             engine = DiceEngine()
 
         self.active_games[table.table_id] = engine
-        return engine.initialize(player_ids, nicknames)
+        return engine.initialize(player_ids, nicknames, avatars)
 
     def handle_action(self, table_id: str, player_id: str, action: str, data: dict) -> list[tuple[str, ServerEvent]]:
         engine = self.active_games.get(table_id)

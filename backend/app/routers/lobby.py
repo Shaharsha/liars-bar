@@ -16,6 +16,7 @@ sessions: dict[str, dict] = {}
 
 class CreateSessionRequest(BaseModel):
     nickname: str
+    avatar: str = "fox"
 
 class CreateTableRequest(BaseModel):
     name: str
@@ -24,7 +25,7 @@ class CreateTableRequest(BaseModel):
 @router.post("/session")
 async def create_session(req: CreateSessionRequest, response: Response):
     session_id = uuid4().hex
-    sessions[session_id] = {"nickname": req.nickname, "session_id": session_id}
+    sessions[session_id] = {"nickname": req.nickname, "avatar": req.avatar, "session_id": session_id}
     response.set_cookie(
         key="session_id",
         value=session_id,
@@ -33,7 +34,7 @@ async def create_session(req: CreateSessionRequest, response: Response):
         secure=settings.env == "prod",
         max_age=86400,
     )
-    return {"session_id": session_id, "nickname": req.nickname}
+    return {"session_id": session_id, "nickname": req.nickname, "avatar": req.avatar}
 
 @router.get("/session")
 async def get_session(session_id: Optional[str] = Cookie(None)):
@@ -49,12 +50,13 @@ async def list_tables():
 async def create_table(req: CreateTableRequest, session_id: Optional[str] = Cookie(None)):
     if not session_id or session_id not in sessions:
         return {"error": "No session"}, 401
-    nickname = sessions[session_id]["nickname"]
+    session_data = sessions[session_id]
     table = await table_manager.create_table(
         name=req.name,
         game_mode=req.game_mode,
         host_session_id=session_id,
-        host_nickname=nickname,
+        host_nickname=session_data["nickname"],
+        host_avatar=session_data.get("avatar", "fox"),
     )
     return {"table": table.model_dump()}
 
@@ -62,13 +64,15 @@ async def create_table(req: CreateTableRequest, session_id: Optional[str] = Cook
 async def join_table(table_id: str, session_id: Optional[str] = Cookie(None)):
     if not session_id or session_id not in sessions:
         return {"error": "No session"}, 401
-    nickname = sessions[session_id]["nickname"]
-    table = await table_manager.join_table(table_id, session_id, nickname)
+    session_data = sessions[session_id]
+    nickname = session_data["nickname"]
+    avatar = session_data.get("avatar", "fox")
+    table = await table_manager.join_table(table_id, session_id, nickname, avatar)
     if table is None:
         return {"error": "Table full or not found"}, 400
     # Notify existing WebSocket connections about the new player
     await connection_manager.broadcast_to_table(table_id, ServerEvent(
         event="player_joined",
-        data={"session_id": session_id, "nickname": nickname}
+        data={"session_id": session_id, "nickname": nickname, "avatar": avatar}
     ))
     return {"table": table.model_dump()}

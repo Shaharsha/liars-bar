@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSessionStore } from '../stores/session'
+import AnimalAvatar, { AVATAR_LIST, type AvatarId } from '../components/AnimalAvatar'
 
 export default function NicknamePage() {
   const [nickname, setNickname] = useState('')
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarId>('fox')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const createSession = useSessionStore((s) => s.createSession)
@@ -21,7 +23,7 @@ export default function NicknamePage() {
     setIsLoading(true)
     setError(null)
     try {
-      await createSession(nickname.trim())
+      await createSession(nickname.trim(), selectedAvatar)
       navigate('/lobby')
     } catch (err: any) {
       setError(err.message || 'Failed to create session')
@@ -51,7 +53,7 @@ export default function NicknamePage() {
         </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-10">
+      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-8">
         {/* Logo */}
         <div className="text-center space-y-3">
           <div className="ornament text-accent-gold/30 mb-4">
@@ -71,19 +73,8 @@ export default function NicknamePage() {
           </div>
         </div>
 
-        {/* Revolver illustration */}
-        <div className="flex items-center gap-2 opacity-40">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="chamber"
-              style={{ animation: `waiting-pulse 2s ease-in-out ${i * 0.3}s infinite` }}
-            />
-          ))}
-        </div>
-
         {/* Form */}
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
           <div className="relative">
             <input
               type="text"
@@ -96,6 +87,35 @@ export default function NicknamePage() {
               autoComplete="off"
             />
           </div>
+
+          {/* Avatar picker */}
+          <div className="space-y-2.5">
+            <p className="text-text-secondary/50 text-[10px] uppercase tracking-[0.2em] text-center font-medium">
+              Choose your animal
+            </p>
+            <div className="flex justify-center gap-2.5 flex-wrap">
+              {AVATAR_LIST.map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setSelectedAvatar(id)}
+                  className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all duration-200 ${
+                    selectedAvatar === id
+                      ? 'bg-bg-surface/80 border-2 border-accent-gold/40 scale-110'
+                      : 'bg-transparent border-2 border-transparent opacity-50 hover:opacity-75'
+                  }`}
+                >
+                  <AnimalAvatar avatar={id} size={38} />
+                  <span className={`text-[9px] uppercase tracking-wider ${
+                    selectedAvatar === id ? 'text-accent-gold' : 'text-text-secondary/60'
+                  }`}>
+                    {label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {error && (
             <p className="text-accent-red text-sm text-center">{error}</p>
           )}

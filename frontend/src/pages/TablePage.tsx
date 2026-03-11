@@ -5,8 +5,7 @@ import { useTableStore } from '../stores/table'
 import { useSessionStore } from '../stores/session'
 import { useGameStore } from '../stores/game'
 import { wsClient } from '../api/ws'
-
-const AVATAR_COLORS = ['#D4A853', '#E07B6C', '#6CB4E0', '#8BD4A0']
+import AnimalAvatar, { getAvatarColor } from '../components/AnimalAvatar'
 
 export default function TablePage() {
   const { tableId } = useParams<{ tableId: string }>()
@@ -104,7 +103,7 @@ export default function TablePage() {
         <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
           {Array.from({ length: table.max_players }).map((_, i) => {
             const player = table.players[i]
-            const color = AVATAR_COLORS[i % AVATAR_COLORS.length]
+            const color = player ? getAvatarColor(player.avatar || 'fox') : undefined
             return (
               <div
                 key={i}
@@ -121,16 +120,7 @@ export default function TablePage() {
               >
                 {player ? (
                   <>
-                    <div
-                      className="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold border-2"
-                      style={{
-                        background: `linear-gradient(135deg, ${color}30, ${color}10)`,
-                        borderColor: `${color}40`,
-                        color: color,
-                      }}
-                    >
-                      {player.nickname[0].toUpperCase()}
-                    </div>
+                    <AnimalAvatar avatar={player.avatar || 'fox'} size={56} />
                     <span className="text-text-primary text-sm font-medium">{player.nickname}</span>
                     {player.session_id === table.host_session_id && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full font-accent tracking-wider uppercase bg-accent-gold/10 text-accent-gold border border-accent-gold/15">

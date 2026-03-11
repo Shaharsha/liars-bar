@@ -6,8 +6,7 @@ import { useSessionStore } from '../stores/session'
 import { wsClient } from '../api/ws'
 import { gameAudio } from '../audio/sounds'
 import type { DeckGameState, DiceGameState, Player } from '../types/models'
-
-const AVATAR_COLORS = ['#D4A853', '#E07B6C', '#6CB4E0', '#8BD4A0']
+import AnimalAvatar from '../components/AnimalAvatar'
 
 // ============ Integrated Revolver SVG (Cylinder visible through frame) ============
 
@@ -396,8 +395,6 @@ export default function GamePage() {
       {/* Opponents */}
       <div className="relative z-10 flex gap-2 px-4 py-3 overflow-x-auto">
         {opponents.map((p) => {
-          const pIdx = gameState.players.findIndex((pl) => pl.session_id === p.session_id)
-          const color = AVATAR_COLORS[pIdx % AVATAR_COLORS.length]
           const isActive = p.session_id === gameState.current_turn
           return (
             <div
@@ -406,24 +403,7 @@ export default function GamePage() {
                 isActive ? 'bg-bg-surface/80 border border-accent-gold/20' : 'bg-bg-surface/30'
               } ${!p.is_alive ? 'opacity-25 grayscale' : ''}`}
             >
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2"
-                style={
-                  p.is_alive
-                    ? {
-                        background: `linear-gradient(135deg, ${color}30, ${color}10)`,
-                        borderColor: `${color}35`,
-                        color: color,
-                      }
-                    : {
-                        background: 'rgba(28,28,43,0.5)',
-                        borderColor: 'rgba(42,42,58,0.5)',
-                        color: '#8B8B9E',
-                      }
-                }
-              >
-                {p.is_alive ? p.nickname[0].toUpperCase() : '\u2620'}
-              </div>
+              <AnimalAvatar avatar={p.avatar || 'fox'} size={40} dead={!p.is_alive} />
               <span className="text-[10px] text-text-secondary truncate max-w-[60px]">{p.nickname}</span>
               {p.revolver && p.is_alive && (
                 <PlayerRevolver chambers={p.revolver.chambers} shotsFired={p.revolver.shots_fired} />
@@ -1024,10 +1004,13 @@ function RouletteOverlay({
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center gap-4 px-8">
-        {/* Player name */}
-        <p className="text-text-secondary/60 font-accent tracking-[0.3em] text-xs uppercase">
-          {player?.nickname || '...'}
-        </p>
+        {/* Player avatar + name */}
+        <div className="flex flex-col items-center gap-2">
+          <AnimalAvatar avatar={player?.avatar || 'fox'} size={48} />
+          <p className="text-text-secondary/60 font-accent tracking-[0.3em] text-xs uppercase">
+            {player?.nickname || '...'}
+          </p>
+        </div>
 
         {isDice ? (
           /* Poison vial for dice mode */
@@ -1173,8 +1156,9 @@ function GameOverOverlay({ data, onBack }: { data: any; onBack: () => void }) {
         className="bg-bg-surface border border-border-gold rounded-3xl p-10 text-center space-y-6 max-w-xs mx-4"
         style={{ animation: 'slide-up-bounce 0.5s ease-out' }}
       >
-        <div className="text-5xl" style={{ animation: 'float 3s ease-in-out infinite' }}>
-          {'\uD83D\uDC51'}
+        <div className="flex flex-col items-center gap-2" style={{ animation: 'float 3s ease-in-out infinite' }}>
+          <div className="text-3xl">{'\uD83D\uDC51'}</div>
+          <AnimalAvatar avatar={data.winner_avatar || 'fox'} size={72} />
         </div>
         <div className="space-y-1">
           <h2 className="text-3xl font-accent text-accent-gold text-glow-gold">WINNER</h2>

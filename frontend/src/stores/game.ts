@@ -6,7 +6,7 @@ interface GameStore {
   rouletteResult: { player_id: string; survived: boolean; shots_fired: number; chambers: number } | null
   revealedCards: { cards: string[]; was_lying: boolean } | null
   revealedDice: { all_dice: Record<string, number[]>; actual_count: number; bid_was_correct: boolean } | null
-  gameOver: { winner_id: string; winner_nickname: string } | null
+  gameOver: { winner_id: string; winner_nickname: string; winner_avatar?: string } | null
   liarCalled: { caller_id: string } | null
   setGameState: (state: GameState) => void
   setRouletteResult: (result: any) => void

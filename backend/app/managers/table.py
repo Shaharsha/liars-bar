@@ -7,18 +7,18 @@ class TableManager:
         self.tables: dict[str, Table] = {}
         self._lock = asyncio.Lock()
 
-    async def create_table(self, name: str, game_mode: GameMode, host_session_id: str, host_nickname: str) -> Table:
+    async def create_table(self, name: str, game_mode: GameMode, host_session_id: str, host_nickname: str, host_avatar: str = "fox") -> Table:
         async with self._lock:
             table = Table(
                 name=name,
                 game_mode=game_mode,
                 host_session_id=host_session_id,
-                players=[Player(session_id=host_session_id, nickname=host_nickname)],
+                players=[Player(session_id=host_session_id, nickname=host_nickname, avatar=host_avatar)],
             )
             self.tables[table.table_id] = table
             return table
 
-    async def join_table(self, table_id: str, session_id: str, nickname: str) -> Table | None:
+    async def join_table(self, table_id: str, session_id: str, nickname: str, avatar: str = "fox") -> Table | None:
         async with self._lock:
             table = self.tables.get(table_id)
             if not table:
@@ -30,7 +30,7 @@ class TableManager:
             if any(p.session_id == session_id for p in table.players):
                 return table  # Already in table
 
-            table.players.append(Player(session_id=session_id, nickname=nickname))
+            table.players.append(Player(session_id=session_id, nickname=nickname, avatar=avatar))
             return table
 
     def leave_table(self, table_id: str, session_id: str) -> Table | None:
@@ -67,6 +67,7 @@ class TableManager:
                 player_count=len(table.players),
                 max_players=table.max_players,
                 player_nicknames=[p.nickname for p in table.players],
+                player_avatars=[p.avatar for p in table.players],
             ).model_dump())
         return result
 
