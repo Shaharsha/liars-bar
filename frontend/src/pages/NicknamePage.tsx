@@ -99,10 +99,10 @@ export default function NicknamePage() {
                   key={id}
                   type="button"
                   onClick={() => setSelectedAvatar(id)}
-                  className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all duration-200 ${
+                  className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 ${
                     selectedAvatar === id
-                      ? 'bg-bg-surface/80 border-2 border-accent-gold/40 scale-110'
-                      : 'bg-transparent border-2 border-transparent opacity-50 hover:opacity-75'
+                      ? 'bg-bg-surface/80 border-accent-gold/40 scale-110 opacity-100'
+                      : 'bg-transparent border-transparent opacity-50'
                   }`}
                 >
                   <AnimalAvatar avatar={id} size={38} />
