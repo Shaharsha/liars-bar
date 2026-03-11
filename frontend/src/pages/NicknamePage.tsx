@@ -31,19 +31,25 @@ export default function NicknamePage() {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-6">
-      {/* Animated background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-b from-bg-primary via-bg-surface to-bg-primary opacity-50" />
-
-      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-8">
+    <div className="min-h-dvh flex flex-col items-center justify-center px-6 bg-speakeasy bg-noise">
+      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-10">
         {/* Logo */}
-        <div className="text-center">
-          <h1 className="text-5xl font-accent text-accent-gold tracking-wider" style={{ animation: 'pulse-gold 3s infinite' }}>
+        <div className="text-center space-y-3">
+          <div className="ornament text-accent-gold/30 mb-4">
+            <span className="text-xs tracking-[0.3em] uppercase text-accent-gold/50">Est. 2026</span>
+          </div>
+          <h1
+            className="text-5xl sm:text-6xl font-accent text-accent-gold tracking-wider text-glow-gold"
+            style={{ animation: 'pulse-gold 3s ease-in-out infinite' }}
+          >
             LIAR'S BAR
           </h1>
-          <p className="text-text-secondary mt-2 text-sm tracking-widest uppercase">
+          <p className="text-text-secondary text-sm tracking-[0.25em] uppercase">
             Where trust goes to die
           </p>
+          <div className="ornament text-accent-gold/30 mt-2">
+            <span className="text-accent-gold/20 text-xs">&#9830;</span>
+          </div>
         </div>
 
         {/* Form */}
@@ -55,7 +61,7 @@ export default function NicknamePage() {
               onChange={(e) => setNickname(e.target.value)}
               placeholder="Enter your name"
               maxLength={16}
-              className="w-full bg-bg-surface border border-border-subtle rounded-xl px-4 py-3.5 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-gold focus:glow-gold transition-all duration-200 text-center text-lg"
+              className="w-full bg-bg-surface/80 border border-border-subtle rounded-xl px-5 py-4 text-text-primary placeholder:text-text-secondary/40 focus:outline-none focus:border-accent-gold/60 focus:glow-gold transition-all duration-300 text-center text-lg tracking-wide"
               autoFocus
             />
           </div>
@@ -65,7 +71,7 @@ export default function NicknamePage() {
           <button
             type="submit"
             disabled={!nickname.trim() || nickname.trim().length < 2 || isLoading}
-            className="w-full bg-gradient-to-r from-accent-gold/90 to-accent-gold rounded-xl py-3.5 text-bg-primary font-bold text-lg tracking-wide uppercase transition-all duration-200 hover:glow-gold disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+            className="w-full bg-gradient-to-r from-accent-gold to-accent-amber rounded-xl py-4 text-bg-primary font-bold text-lg tracking-wide uppercase transition-all duration-300 hover:glow-gold-lg disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97]"
           >
             {isLoading ? 'Entering...' : 'Enter the Bar'}
           </button>
