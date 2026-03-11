@@ -21,7 +21,7 @@ The punishment mechanic. A 6-chamber revolver with one bullet. Each wrong call a
 |-------|------|
 | Backend | Python 3.12, FastAPI, WebSockets, Pydantic |
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, Zustand |
-| Infra | Docker, Render.com, Cloudflare DNS + R2 |
+| Infra | Docker, Render.com, Cloudflare DNS |
 
 ## Project Structure
 
@@ -42,7 +42,6 @@ The punishment mechanic. A 6-chamber revolver with one bullet. Each wrong call a
 │   │   ├── routers/
 │   │   │   ├── lobby.py         # REST endpoints
 │   │   │   └── ws.py            # WebSocket endpoint
-│   │   └── storage/             # Pluggable storage (memory/R2)
 │   └── tests/
 ├── frontend/
 │   ├── src/
@@ -95,11 +94,6 @@ docker run -p 10000:10000 -e ENV=prod liars-bar
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ENV` | `dev` | `dev` or `prod` |
-| `STORAGE_BACKEND` | `memory` | `memory` or `r2` |
-| `R2_ENDPOINT_URL` | | Cloudflare R2 endpoint |
-| `R2_ACCESS_KEY_ID` | | R2 access key |
-| `R2_SECRET_ACCESS_KEY` | | R2 secret key |
-| `R2_BUCKET_NAME` | `lairs-bar-dev` | R2 bucket name |
 | `TURN_TIMEOUT_SECONDS` | `30` | Turn timer |
 | `MAX_PLAYERS_PER_TABLE` | `4` | Max players per table |
 | `MIN_PLAYERS_TO_START` | `2` | Min players to start |

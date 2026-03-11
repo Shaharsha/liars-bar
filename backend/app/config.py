@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
 from typing import Literal
-
 class Settings(BaseSettings):
     env: Literal["dev", "prod"] = "dev"
     allowed_origins: list[str] = [
@@ -9,13 +8,6 @@ class Settings(BaseSettings):
         "https://liars-bar-kadf.onrender.com",
         "https://liar.shahar.sh",
     ]
-
-    # Storage
-    storage_backend: Literal["memory", "r2"] = "memory"
-    r2_endpoint_url: str = ""
-    r2_access_key_id: str = ""
-    r2_secret_access_key: str = ""
-    r2_bucket_name: str = "lairs-bar-dev"
 
     # Game
     turn_timeout_seconds: int = 30
