@@ -861,7 +861,7 @@ function RevealOverlay({ cards, wasLying }: { cards: string[]; wasLying: boolean
                 {/* Front face (card value) — hidden initially, visible after flip */}
                 <div
                   className="absolute inset-0 card-front rounded-xl flex flex-col items-center justify-center gap-1"
-                  style={{ backfaceVisibility: 'hidden' }}
+                  style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0 }}
                 >
                   <span className="text-2xl font-bold text-text-primary">{cardLabel(card)}</span>
                   <span className="text-[9px] text-text-secondary uppercase">{card}</span>
@@ -869,7 +869,7 @@ function RevealOverlay({ cards, wasLying }: { cards: string[]; wasLying: boolean
                 {/* Back face (pattern) — visible initially, hidden after flip */}
                 <div
                   className="absolute inset-0 card-back rounded-xl"
-                  style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                  style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', position: 'absolute', inset: 0 }}
                 />
               </div>
             </div>
@@ -976,9 +976,7 @@ function RouletteOverlay({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center ${
-        phase === 'result' && !survived ? '' : ''
-      }`}
+      className="fixed inset-0 z-50 flex items-center justify-center"
       style={
         phase === 'result' && !survived
           ? { animation: 'heavy-shake 0.6s' }
