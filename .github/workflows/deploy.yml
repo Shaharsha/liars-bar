@@ -1,0 +1,67 @@
+name: Test & Deploy
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache Poetry
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/poetry.lock') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      - run: pip install poetry && cd backend && poetry install
+
+      - run: cd backend && poetry run pytest tests/ -x
+
+      - name: Frontend checks
+        run: |
+          cd frontend && npm ci
+          npx tsc --noEmit
+          npm run build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy
+    steps:
+      - name: Trigger Render deploy
+        id: trigger
+        run: |
+          DEPLOY=$(curl -sf -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache":"do_not_clear"}')
+          echo "deploy_id=$(echo "$DEPLOY" | jq -r '.id')" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for deploy
+        run: |
+          for i in $(seq 1 60); do
+            STATUS=$(curl -sf "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys/${{ steps.trigger.outputs.deploy_id }}" \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.status')
+            echo "Attempt $i: $STATUS"
+            case "$STATUS" in
+              live) echo "Deploy successful!"; exit 0 ;;
+              deactivated|build_failed|update_failed|canceled|pre_deploy_failed) echo "Deploy failed: $STATUS"; exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "Timed out waiting for deploy"; exit 1
