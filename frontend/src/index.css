@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-primary: #0A0A0F;
+  --color-bg-surface: #16161F;
+  --color-bg-elevated: #1E1E2A;
+  --color-border-subtle: #2A2A3A;
+  --color-accent-gold: #D4A853;
+  --color-accent-red: #E53E3E;
+  --color-accent-green: #38A169;
+  --color-text-primary: #F0E6D2;
+  --color-text-secondary: #8B8B9E;
+  --font-heading: 'Inter', sans-serif;
+  --font-accent: 'Cinzel', serif;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-primary text-text-primary font-heading;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  * {
+    @apply box-border;
+  }
+}
+
+@layer utilities {
+  .glow-gold {
+    box-shadow: 0 0 20px rgba(212, 168, 83, 0.3);
+  }
+  .glow-red {
+    box-shadow: 0 0 20px rgba(229, 62, 62, 0.3);
+  }
+  .glow-green {
+    box-shadow: 0 0 20px rgba(56, 161, 105, 0.3);
+  }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 10px rgba(212, 168, 83, 0.2); }
+  50% { box-shadow: 0 0 25px rgba(212, 168, 83, 0.5); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
