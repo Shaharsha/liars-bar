@@ -8,6 +8,105 @@ import type { DeckGameState, DiceGameState, Player } from '../types/models'
 
 const AVATAR_COLORS = ['#D4A853', '#E07B6C', '#6CB4E0', '#8BD4A0']
 
+// ============ SVG Revolver ============
+
+function RevolverSVG({ className = '' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Barrel */}
+      <rect x="55" y="22" width="62" height="8" rx="2" fill="#3a3a4a" stroke="#4a4a5a" strokeWidth="1" />
+      <rect x="55" y="24" width="62" height="4" rx="1" fill="#2a2a3a" />
+      {/* Front sight */}
+      <rect x="114" y="19" width="4" height="5" rx="1" fill="#4a4a5a" />
+      {/* Frame */}
+      <path d="M20 18 L55 18 L55 38 L50 38 L45 55 L30 55 L28 42 L20 38 Z" fill="#3a3a4a" stroke="#4a4a5a" strokeWidth="1" />
+      {/* Grip */}
+      <path d="M30 38 L45 38 L43 55 L32 55 Z" fill="#5a3a20" stroke="#6a4a30" strokeWidth="1" />
+      <line x1="33" y1="42" x2="42" y2="42" stroke="#4a2a15" strokeWidth="0.5" />
+      <line x1="33" y1="46" x2="41" y2="46" stroke="#4a2a15" strokeWidth="0.5" />
+      <line x1="34" y1="50" x2="40" y2="50" stroke="#4a2a15" strokeWidth="0.5" />
+      {/* Trigger guard */}
+      <path d="M38 38 Q38 48, 46 48 L50 38" fill="none" stroke="#4a4a5a" strokeWidth="1.5" />
+      {/* Trigger */}
+      <line x1="42" y1="38" x2="42" y2="44" stroke="#5a5a6a" strokeWidth="1.5" />
+      {/* Hammer */}
+      <path d="M20 18 L15 12 L20 10 L25 16" fill="#3a3a4a" stroke="#4a4a5a" strokeWidth="1" />
+    </svg>
+  )
+}
+
+function CylinderSVG({ chambers, shotsFired, survived, spinning }: { chambers: number; shotsFired: number; survived: boolean; spinning: boolean }) {
+  const radius = 28
+  const chamberR = 7
+  return (
+    <svg width="80" height="80" viewBox="0 0 80 80">
+      {/* Outer cylinder ring */}
+      <circle cx="40" cy="40" r="32" fill="none" stroke="#4a4a5a" strokeWidth="2" />
+      <circle cx="40" cy="40" r="30" fill="#1a1a2a" />
+      {/* Inner ring detail */}
+      <circle cx="40" cy="40" r="12" fill="none" stroke="#3a3a4a" strokeWidth="1" />
+      <circle cx="40" cy="40" r="5" fill="#2a2a3a" stroke="#3a3a4a" strokeWidth="1" />
+      {/* Chambers */}
+      <g style={spinning ? { animation: 'cylinder-spin 2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards', transformOrigin: '40px 40px' } : undefined}>
+        {Array.from({ length: chambers }).map((_, i) => {
+          const angle = (i * 360) / chambers - 90
+          const cx = 40 + radius * Math.cos((angle * Math.PI) / 180)
+          const cy = 40 + radius * Math.sin((angle * Math.PI) / 180)
+          const isFatal = i === shotsFired - 1 && !survived
+          const isFired = i < shotsFired
+          return (
+            <g key={i}>
+              <circle
+                cx={cx} cy={cy} r={chamberR}
+                fill={isFatal ? '#E53E3E' : isFired ? 'rgba(212,168,83,0.7)' : '#0a0a14'}
+                stroke={isFatal ? '#ff4444' : isFired ? '#D4A853' : '#3a3a4a'}
+                strokeWidth="1.5"
+              />
+              {isFatal && (
+                <circle cx={cx} cy={cy} r={chamberR + 2} fill="none" stroke="#E53E3E" strokeWidth="1" opacity="0.5">
+                  <animate attributeName="r" from={`${chamberR}`} to={`${chamberR + 6}`} dur="1s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" from="0.5" to="0" dur="1s" repeatCount="indefinite" />
+                </circle>
+              )}
+              {/* Bullet dot in unfired chambers */}
+              {!isFired && (
+                <circle cx={cx} cy={cy} r="2" fill="#3a3a4a" />
+              )}
+            </g>
+          )
+        })}
+      </g>
+    </svg>
+  )
+}
+
+// ============ Inline Revolver for Player Avatars ============
+
+function PlayerRevolver({ chambers, shotsFired }: { chambers: number; shotsFired: number }) {
+  return (
+    <div className="flex items-center gap-0.5 mt-0.5">
+      {/* Mini gun icon */}
+      <svg width="14" height="10" viewBox="0 0 14 10" className="mr-0.5 opacity-40">
+        <rect x="6" y="3" width="8" height="2.5" rx="0.5" fill="#8B8B9E" />
+        <rect x="0" y="1" width="7" height="6" rx="1" fill="#8B8B9E" />
+        <rect x="2" y="6" width="3" height="3" rx="0.5" fill="#6a5a40" />
+      </svg>
+      {Array.from({ length: chambers }).map((_, i) => (
+        <div
+          key={i}
+          className={`w-[6px] h-[6px] rounded-full border transition-all ${
+            i < shotsFired
+              ? 'bg-accent-gold/80 border-accent-gold'
+              : 'bg-transparent border-text-secondary/20'
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ============ Main Game Page ============
+
 export default function GamePage() {
   const { tableId } = useParams<{ tableId: string }>()
   const navigate = useNavigate()
@@ -17,20 +116,29 @@ export default function GamePage() {
   const revealedCards = useGameStore((s) => s.revealedCards)
   const revealedDice = useGameStore((s) => s.revealedDice)
   const gameOver = useGameStore((s) => s.gameOver)
+  const liarCalled = useGameStore((s) => s.liarCalled)
   const clearOverlays = useGameStore((s) => s.clearOverlays)
 
   useWebSocket(tableId!)
 
+  // Auto-clear liar called flash after 1.2s
+  useEffect(() => {
+    if (liarCalled) {
+      const t = setTimeout(() => useGameStore.getState().setLiarCalled(null), 1200)
+      return () => clearTimeout(t)
+    }
+  }, [liarCalled])
+
   useEffect(() => {
     if (rouletteResult) {
-      const t = setTimeout(clearOverlays, 3500)
+      const t = setTimeout(clearOverlays, 4500)
       return () => clearTimeout(t)
     }
   }, [rouletteResult, clearOverlays])
 
   useEffect(() => {
     if (revealedCards) {
-      const t = setTimeout(clearOverlays, 3000)
+      const t = setTimeout(clearOverlays, 3500)
       return () => clearTimeout(t)
     }
   }, [revealedCards, clearOverlays])
@@ -86,12 +194,9 @@ export default function GamePage() {
         }`}>
           {isMyTurn ? 'Your turn' : `${gameState.players.find(p => p.session_id === gameState.current_turn)?.nickname || '...'}'s turn`}
         </div>
+        {/* My revolver status */}
         {me?.revolver && me.is_alive && (
-          <div className="flex gap-1.5">
-            {Array.from({ length: me.revolver.chambers }).map((_, i) => (
-              <div key={i} className={`chamber ${i < me.revolver!.shots_fired ? 'chamber-fired' : ''}`} />
-            ))}
-          </div>
+          <PlayerRevolver chambers={me.revolver.chambers} shotsFired={me.revolver.shots_fired} />
         )}
       </div>
 
@@ -104,7 +209,7 @@ export default function GamePage() {
           return (
             <div
               key={p.session_id}
-              className={`flex flex-col items-center gap-1.5 min-w-[70px] p-3 rounded-2xl transition-all duration-300 ${
+              className={`flex flex-col items-center gap-1 min-w-[70px] p-3 rounded-2xl transition-all duration-300 ${
                 isActive ? 'bg-bg-surface/80 border border-accent-gold/20' : 'bg-bg-surface/30'
               } ${!p.is_alive ? 'opacity-25 grayscale' : ''}`}
             >
@@ -123,12 +228,9 @@ export default function GamePage() {
                 {p.is_alive ? p.nickname[0].toUpperCase() : '\u2620'}
               </div>
               <span className="text-[10px] text-text-secondary truncate max-w-[60px]">{p.nickname}</span>
+              {/* Inline revolver with gun icon */}
               {p.revolver && p.is_alive && (
-                <div className="flex gap-1">
-                  {Array.from({ length: p.revolver.chambers }).map((_, i) => (
-                    <div key={i} className={`w-[8px] h-[8px] rounded-full border border-accent-gold/30 ${i < p.revolver!.shots_fired ? 'bg-accent-gold/80 border-accent-gold' : 'bg-transparent'}`} />
-                  ))}
-                </div>
+                <PlayerRevolver chambers={p.revolver.chambers} shotsFired={p.revolver.shots_fired} />
               )}
             </div>
           )
@@ -143,10 +245,11 @@ export default function GamePage() {
         <DiceBoard gameState={gameState as DiceGameState} isMyTurn={isMyTurn} />
       )}
 
-      {/* Overlays */}
+      {/* Overlays — layered with proper z-ordering */}
+      {liarCalled && <LiarCallOverlay />}
       {revealedCards && <RevealOverlay cards={revealedCards.cards} wasLying={revealedCards.was_lying} />}
       {revealedDice && <DiceRevealOverlay data={revealedDice} />}
-      {rouletteResult && <RouletteOverlay result={rouletteResult} players={gameState.players} />}
+      {rouletteResult && <RouletteOverlay result={rouletteResult} players={gameState.players} gameMode={gameState.game_mode} />}
       {gameOver && <GameOverOverlay data={gameOver} onBack={() => navigate('/lobby')} />}
     </div>
   )
@@ -204,7 +307,6 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
 
   const isMatch = (card: string) => card === gameState.table_card || card === 'joker'
 
-  // Fan angle calculation
   const handSize = gameState.your_hand.length
   const maxAngle = handSize <= 3 ? 8 : 12
   const getCardRotation = (i: number) => {
@@ -219,9 +321,7 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
 
   return (
     <>
-      {/* Board */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 gap-4 table-felt">
-        {/* Table card */}
         <div className="text-center space-y-2">
           <span className="text-text-secondary/50 text-[10px] uppercase tracking-[0.3em]">Table Card</span>
           <div className="mx-auto w-16 h-24 rounded-xl card-front flex flex-col items-center justify-center gap-1" style={{ borderColor: 'rgba(212,168,83,0.25)' }}>
@@ -230,7 +330,6 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
           </div>
         </div>
 
-        {/* Last play info */}
         {gameState.last_play && (
           <div className="bg-bg-surface/60 border border-border-subtle rounded-xl px-4 py-2.5 text-text-secondary text-sm" style={{ animation: 'fade-in 0.3s' }}>
             <span className="text-text-primary font-medium">
@@ -241,7 +340,6 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
         )}
       </div>
 
-      {/* Your hand — fan layout */}
       <div className="relative z-10 px-4 pb-2 pt-4">
         <div className="flex justify-center" style={{ perspective: '800px' }}>
           {gameState.your_hand.map((card, i) => {
@@ -264,18 +362,15 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
                   touchAction: 'manipulation',
                 }}
               >
-                {/* Top-left rank */}
                 <span className={`absolute top-1.5 left-2 text-[10px] font-bold ${isMatch(card) ? 'text-accent-gold' : 'text-accent-red/70'}`}>
                   {cardLabel(card)}
                 </span>
-                {/* Center suit */}
                 <span className={`text-2xl font-bold ${isMatch(card) ? 'text-accent-gold' : 'text-accent-red/70'}`}>
                   {cardSuit(card) === 'WILD' ? '\u2605' : cardSuit(card)}
                 </span>
                 <span className={`text-xs font-bold mt-0.5 ${isMatch(card) ? 'text-accent-gold/80' : 'text-accent-red/50'}`}>
                   {cardLabel(card)}
                 </span>
-                {/* Bottom-right rank */}
                 <span className={`absolute bottom-1.5 right-2 text-[10px] font-bold rotate-180 ${isMatch(card) ? 'text-accent-gold' : 'text-accent-red/70'}`}>
                   {cardLabel(card)}
                 </span>
@@ -285,7 +380,6 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
         </div>
       </div>
 
-      {/* Actions */}
       <div className="relative z-10 flex gap-3 px-5 py-4 border-t border-border-subtle bg-bg-surface/40 backdrop-blur-sm" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
         <button
           onClick={handlePlay}
@@ -315,22 +409,14 @@ function DiceFace({ value, className = '' }: { value: number; className?: string
   const pips = Array.from({ length: value }, (_, i) => (
     <div key={i} className="die-pip" />
   ))
-  return (
-    <div className={`die die-${value} ${className}`}>
-      {pips}
-    </div>
-  )
+  return <div className={`die die-${value} ${className}`}>{pips}</div>
 }
 
 function DiceFaceSm({ value, className = '' }: { value: number; className?: string }) {
   const pips = Array.from({ length: value }, (_, i) => (
     <div key={i} className="die-pip" />
   ))
-  return (
-    <div className={`die-sm die-${value} ${className}`}>
-      {pips}
-    </div>
-  )
+  return <div className={`die-sm die-${value} ${className}`}>{pips}</div>
 }
 
 // ============ Dice Board ============
@@ -365,7 +451,6 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
 
   return (
     <>
-      {/* Bid history */}
       <div className="relative z-10 flex-1 px-4 py-3 overflow-y-auto">
         <div className="space-y-2">
           {gameState.bid_history.map((bid, i) => {
@@ -374,9 +459,7 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
               <div
                 key={i}
                 className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
-                  isLatest
-                    ? 'bg-accent-gold/10 border border-accent-gold/20'
-                    : 'bg-bg-surface/40'
+                  isLatest ? 'bg-accent-gold/10 border border-accent-gold/20' : 'bg-bg-surface/40'
                 }`}
                 style={isLatest ? { animation: 'slide-up 0.2s ease-out' } : undefined}
               >
@@ -396,7 +479,6 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
         </div>
       </div>
 
-      {/* Your dice */}
       <div className="relative z-10 flex justify-center gap-3 px-4 py-4">
         {gameState.your_dice.map((die, i) => (
           <div key={i} style={{ animation: `fade-in 0.3s ease-out ${i * 0.08}s both` }}>
@@ -405,7 +487,6 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
         ))}
       </div>
 
-      {/* Bid panel */}
       {isMyTurn && (
         <div className="relative z-10 px-5 py-5 border-t border-border-subtle bg-bg-surface/40 backdrop-blur-sm space-y-4" style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}>
           <div className="flex items-center justify-center gap-4">
@@ -470,7 +551,25 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
   )
 }
 
-// ============ Overlays ============
+// ============ LIAR! Call Overlay ============
+
+function LiarCallOverlay() {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+      style={{ animation: 'liar-bg-flash 1.2s ease-out forwards' }}
+    >
+      <h1
+        className="text-7xl font-accent font-bold text-accent-red text-glow-red select-none"
+        style={{ animation: 'liar-slam 0.6s ease-out forwards' }}
+      >
+        LIAR!
+      </h1>
+    </div>
+  )
+}
+
+// ============ Card Reveal Overlay ============
 
 function RevealOverlay({ cards, wasLying }: { cards: string[]; wasLying: boolean }) {
   const cardLabel = (c: string) => {
@@ -485,36 +584,42 @@ function RevealOverlay({ cards, wasLying }: { cards: string[]; wasLying: boolean
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm"
-      style={{ animation: wasLying ? 'flash-red 0.5s' : 'flash-green 0.5s' }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      style={{ animation: 'fade-in 0.3s' }}
     >
       <div className="bg-bg-surface border border-border-subtle rounded-3xl p-8 text-center space-y-5 max-w-xs mx-4" style={{ animation: 'slide-up-bounce 0.4s ease-out' }}>
         <h2
           className={`text-4xl font-accent font-bold ${wasLying ? 'text-accent-red text-glow-red' : 'text-accent-green'}`}
           style={{ animation: 'slam-in 0.4s ease-out' }}
         >
-          {wasLying ? 'LIAR!' : 'TRUTH!'}
+          {wasLying ? 'CAUGHT!' : 'TRUTH!'}
         </h2>
-        <div className="flex gap-3 justify-center">
+        {/* Cards flip in one by one */}
+        <div className="flex gap-3 justify-center" style={{ perspective: '600px' }}>
           {cards.map((card, i) => (
             <div
               key={i}
               className="card-front w-16 h-24 rounded-xl flex flex-col items-center justify-center gap-1"
-              style={{ animation: `slide-up 0.3s ease-out ${i * 0.1}s both` }}
+              style={{ animation: `card-flip-in 0.5s ease-out ${0.3 + i * 0.2}s both` }}
             >
               <span className="text-2xl font-bold text-text-primary">{cardLabel(card)}</span>
               <span className="text-[9px] text-text-secondary uppercase">{card}</span>
             </div>
           ))}
         </div>
+        <p className="text-text-secondary/50 text-xs">
+          {wasLying ? 'The cards were fake!' : 'All cards were legitimate.'}
+        </p>
       </div>
     </div>
   )
 }
 
+// ============ Dice Reveal Overlay ============
+
 function DiceRevealOverlay({ data }: { data: any }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm" style={{ animation: 'fade-in 0.2s' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" style={{ animation: 'fade-in 0.2s' }}>
       <div className="bg-bg-surface border border-border-subtle rounded-3xl p-8 text-center space-y-5 max-w-sm w-full mx-4" style={{ animation: 'slide-up-bounce 0.4s ease-out' }}>
         <h2 className={`text-3xl font-accent font-bold ${data.bid_was_correct ? 'text-accent-green' : 'text-accent-red text-glow-red'}`}>
           {data.bid_was_correct ? 'Bid Was Right!' : 'Bid Was Wrong!'}
@@ -536,60 +641,128 @@ function DiceRevealOverlay({ data }: { data: any }) {
   )
 }
 
-function RouletteOverlay({ result, players }: { result: any; players: Player[] }) {
+// ============ Roulette Overlay (Revolver) ============
+
+function RouletteOverlay({ result, players, gameMode }: { result: any; players: Player[]; gameMode: string }) {
   const player = players.find(p => p.session_id === result.player_id)
   const survived = result.survived
+  const [phase, setPhase] = useState<'spin' | 'result'>('spin')
+
+  useEffect(() => {
+    const t = setTimeout(() => setPhase('result'), 2200)
+    return () => clearTimeout(t)
+  }, [])
+
+  const isDice = gameMode === 'dice'
 
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md ${
-        survived ? 'bg-black/80' : 'bg-accent-red/20'
+        phase === 'result' && !survived ? 'bg-black/90' : 'bg-black/85'
       }`}
-      style={!survived ? { animation: 'heavy-shake 0.6s' } : { animation: 'fade-in 0.3s' }}
+      style={phase === 'result' && !survived ? { animation: 'heavy-shake 0.6s' } : { animation: 'fade-in 0.3s' }}
     >
-      {!survived && (
-        <div className="absolute inset-0 pointer-events-none" style={{ animation: 'flash-red 0.8s' }} />
-      )}
+      {/* Blood splatter on death */}
+      {phase === 'result' && !survived && <div className="lens-crack" />}
 
-      <div className="bg-bg-surface border border-border-subtle rounded-3xl p-8 text-center space-y-5 max-w-xs mx-4" style={{ animation: 'slide-up-bounce 0.4s ease-out' }}>
-        <h2 className="text-sm text-text-secondary/60 font-accent tracking-[0.3em] uppercase">Russian Roulette</h2>
-
-        <div className="flex gap-2.5 justify-center my-3">
-          {Array.from({ length: result.chambers }).map((_: any, i: number) => (
-            <div
-              key={i}
-              className={`w-4 h-4 rounded-full border-2 transition-all ${
-                i === result.shots_fired - 1 && !survived
-                  ? 'chamber-bullet'
-                  : i < result.shots_fired
-                  ? 'chamber-fired'
-                  : 'border-border-subtle bg-bg-elevated'
-              }`}
-              style={{ animationDelay: `${i * 0.1}s` }}
-            />
-          ))}
-        </div>
-
-        <div className="text-5xl" style={{ animation: survived ? 'float 2s infinite' : 'shake 0.3s' }}>
-          {survived ? '\uD83D\uDE2E\u200D\uD83D\uDCA8' : '\uD83D\uDC80'}
-        </div>
+      <div className="bg-bg-surface border border-border-subtle rounded-3xl p-8 text-center space-y-4 max-w-xs mx-4 relative" style={{ animation: 'slide-up-bounce 0.4s ease-out' }}>
+        <h2 className="text-sm text-text-secondary/60 font-accent tracking-[0.3em] uppercase">
+          {isDice ? 'Drink the Poison' : 'Russian Roulette'}
+        </h2>
 
         <p className="text-text-primary font-bold text-lg">{player?.nickname || '...'}</p>
 
-        <p
-          className={`text-4xl font-accent font-bold ${survived ? 'text-accent-green' : 'text-accent-red text-glow-red'}`}
-          style={{ animation: 'slam-in 0.5s ease-out 0.2s both' }}
-        >
-          {survived ? '*CLICK*' : 'BANG!'}
-        </p>
+        {/* Revolver / Poison visual */}
+        {isDice ? (
+          /* Poison vial for dice mode */
+          <div className="flex justify-center py-2">
+            <div className="relative">
+              <svg width="50" height="80" viewBox="0 0 50 80">
+                <rect x="18" y="5" width="14" height="8" rx="2" fill="#4a4a5a" stroke="#5a5a6a" strokeWidth="1" />
+                <path d="M15 13 L35 13 L38 25 Q40 40, 38 60 Q36 75, 25 75 Q14 75, 12 60 Q10 40, 12 25 Z" fill="none" stroke="#4a4a5a" strokeWidth="1.5" />
+                <path d="M15 13 L35 13 L38 25 Q40 40, 38 60 Q36 75, 25 75 Q14 75, 12 60 Q10 40, 12 25 Z"
+                  fill={survived ? 'rgba(56, 161, 105, 0.3)' : 'rgba(229, 62, 62, 0.4)'}
+                />
+                {/* Liquid level */}
+                <path d={`M14 ${survived ? 45 : 30} Q25 ${survived ? 48 : 33}, 36 ${survived ? 45 : 30} Q38 60, 36 70 Q34 75, 25 75 Q16 75, 14 70 Q12 60, 14 ${survived ? 45 : 30} Z`}
+                  fill={survived ? 'rgba(56, 161, 105, 0.5)' : 'rgba(180, 30, 30, 0.6)'}
+                />
+                {/* Skull on vial */}
+                <text x="25" y="55" textAnchor="middle" fontSize="14" fill="rgba(255,255,255,0.3)">&#9760;</text>
+              </svg>
+              {phase === 'result' && !survived && (
+                <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-accent-red/50"
+                  style={{ animation: 'muzzle-flash 0.5s ease-out forwards' }}
+                />
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Revolver cylinder for deck mode */
+          <div className="flex flex-col items-center gap-3">
+            <CylinderSVG
+              chambers={result.chambers}
+              shotsFired={result.shots_fired}
+              survived={survived}
+              spinning={phase === 'spin'}
+            />
+            <RevolverSVG className="w-32 h-16 opacity-60" />
+          </div>
+        )}
 
-        {survived && (
-          <p className="text-text-secondary/40 text-xs">Chamber {result.shots_fired} of {result.chambers}</p>
+        {/* Result text */}
+        {phase === 'result' && (
+          <>
+            <p
+              className={`text-5xl font-accent font-bold ${survived ? 'text-accent-green' : 'text-accent-red text-glow-red'}`}
+              style={{ animation: 'slam-in 0.4s ease-out' }}
+            >
+              {isDice
+                ? (survived ? 'SAFE' : 'DEAD')
+                : (survived ? '*CLICK*' : 'BANG!')
+              }
+            </p>
+
+            {/* Smoke wisps on survive */}
+            {survived && !isDice && (
+              <div className="flex justify-center gap-2">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-text-secondary/20"
+                    style={{ animation: `smoke-drift 1.5s ease-out ${i * 0.2}s forwards` }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {survived && (
+              <p className="text-text-secondary/40 text-xs">
+                {isDice
+                  ? `Vial ${result.shots_fired} of ${result.chambers}`
+                  : `Chamber ${result.shots_fired} of ${result.chambers}`
+                }
+              </p>
+            )}
+
+            {/* Muzzle flash on death (deck mode) */}
+            {!survived && !isDice && (
+              <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-accent-amber/60"
+                style={{ animation: 'muzzle-flash 0.4s ease-out forwards' }}
+              />
+            )}
+          </>
+        )}
+
+        {phase === 'spin' && (
+          <p className="text-text-secondary/40 text-sm font-accent tracking-wider" style={{ animation: 'fade-in 0.5s' }}>
+            {isDice ? 'Drinking...' : 'Spinning cylinder...'}
+          </p>
         )}
       </div>
     </div>
   )
 }
+
+// ============ Game Over ============
 
 function GameOverOverlay({ data, onBack }: { data: any; onBack: () => void }) {
   return (

@@ -404,3 +404,77 @@
   0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
   40% { transform: translateY(-6px); opacity: 1; }
 }
+
+/* ========================================
+   Roulette & Dramatic Overlays
+   ======================================== */
+
+@keyframes cylinder-spin {
+  0% { transform: rotate(0deg); }
+  70% { transform: rotate(1080deg); }
+  85% { transform: rotate(1140deg); }
+  100% { transform: rotate(1200deg); }
+}
+
+@keyframes gun-recoil {
+  0% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-12px) rotate(-8deg); }
+  40% { transform: translateX(4px) rotate(2deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+.lens-crack {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  background:
+    radial-gradient(ellipse at 45% 40%, rgba(229, 62, 62, 0.6) 0%, transparent 40%),
+    radial-gradient(ellipse at 55% 35%, rgba(180, 30, 30, 0.4) 0%, transparent 30%),
+    radial-gradient(ellipse at 40% 50%, rgba(229, 62, 62, 0.3) 0%, transparent 50%);
+  animation: splatter-in 0.3s ease-out forwards;
+}
+.lens-crack::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(35deg, transparent 30%, rgba(255,255,255,0.03) 30.5%, transparent 31%),
+    linear-gradient(125deg, transparent 40%, rgba(255,255,255,0.04) 40.5%, transparent 41%),
+    linear-gradient(75deg, transparent 55%, rgba(255,255,255,0.03) 55.5%, transparent 56%),
+    linear-gradient(160deg, transparent 25%, rgba(255,255,255,0.02) 25.5%, transparent 26%);
+}
+
+@keyframes splatter-in {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes liar-slam {
+  0% { transform: scale(4) rotate(-5deg); opacity: 0; }
+  30% { transform: scale(0.85) rotate(2deg); opacity: 1; }
+  50% { transform: scale(1.1) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes liar-bg-flash {
+  0% { background-color: rgba(229, 62, 62, 0.5); }
+  100% { background-color: rgba(229, 62, 62, 0.15); }
+}
+
+@keyframes card-flip-in {
+  0% { transform: rotateY(180deg) scale(0.8); opacity: 0; }
+  60% { transform: rotateY(-10deg) scale(1.05); opacity: 1; }
+  100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+}
+
+@keyframes muzzle-flash {
+  0% { opacity: 1; transform: scale(0.5); }
+  50% { opacity: 0.8; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(2); }
+}
+
+@keyframes smoke-drift {
+  0% { opacity: 0.6; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-30px) scale(1.5); }
+}

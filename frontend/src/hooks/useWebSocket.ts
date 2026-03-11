@@ -40,7 +40,9 @@ export function useWebSocket(tableId: string) {
       wsClient.on('cards_played', () => {
         // Will be followed by game_state update
       }),
-      wsClient.on('liar_called', () => {}),
+      wsClient.on('liar_called', (data) => {
+        useGameStore.getState().setLiarCalled(data)
+      }),
       wsClient.on('cards_revealed', (data) => {
         useGameStore.getState().setRevealedCards(data)
       }),
