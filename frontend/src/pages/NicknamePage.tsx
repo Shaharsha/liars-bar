@@ -5,7 +5,9 @@ import AnimalAvatar, { AVATAR_LIST, type AvatarId } from '../components/AnimalAv
 
 export default function NicknamePage() {
   const [nickname, setNickname] = useState('')
-  const [selectedAvatar, setSelectedAvatar] = useState<AvatarId>('fox')
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarId>(
+    () => AVATAR_LIST[Math.floor(Math.random() * AVATAR_LIST.length)].id
+  )
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const createSession = useSessionStore((s) => s.createSession)
