@@ -39,8 +39,8 @@
 }
 
 @keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 10px rgba(212, 168, 83, 0.2); }
-  50% { box-shadow: 0 0 25px rgba(212, 168, 83, 0.5); }
+  0%, 100% { text-shadow: 0 0 10px rgba(212, 168, 83, 0.3), 0 0 20px rgba(212, 168, 83, 0.15); }
+  50% { text-shadow: 0 0 20px rgba(212, 168, 83, 0.6), 0 0 40px rgba(212, 168, 83, 0.3), 0 0 60px rgba(212, 168, 83, 0.1); }
 }
 
 @keyframes shake {
