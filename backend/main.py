@@ -1,14 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
 from contextlib import asynccontextmanager
-import os
+from pathlib import Path
 
 from app.config import settings
 from app.routers import lobby, ws
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,19 +23,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# SPA fallback middleware — must be added before static files mount
-if settings.env == "prod" and os.path.isdir("static"):
-    class SPAMiddleware(BaseHTTPMiddleware):
-        async def dispatch(self, request: Request, call_next):
-            response = await call_next(request)
-            path = request.url.path
-            # If 404 and not an API/WS route, serve index.html
-            if response.status_code == 404 and not path.startswith(("/api", "/ws")):
-                return FileResponse("static/index.html")
-            return response
-
-    app.add_middleware(SPAMiddleware)
-
 @app.get("/api/health")
 async def health():
     return {"status": "ok"}
@@ -44,6 +30,17 @@ async def health():
 app.include_router(lobby.router, prefix="/api")
 app.include_router(ws.router)
 
-# Serve React build static files in production
-if settings.env == "prod" and os.path.isdir("static"):
-    app.mount("/", StaticFiles(directory="static"), name="static")
+@app.get("/{full_path:path}")
+async def spa_fallback(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    if STATIC_DIR.exists():
+        candidate = STATIC_DIR / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        idx = STATIC_DIR / "index.html"
+        if idx.exists():
+            return FileResponse(idx)
+
+    raise HTTPException(status_code=404, detail="No frontend build found")
