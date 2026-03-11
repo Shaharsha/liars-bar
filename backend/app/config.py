@@ -3,7 +3,12 @@ from typing import Literal
 
 class Settings(BaseSettings):
     env: Literal["dev", "prod"] = "dev"
-    allowed_origins: list[str] = ["http://localhost:5173", "http://localhost:8000"]
+    allowed_origins: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:8000",
+        "https://liars-bar-hcu6.onrender.com",
+        "https://lair.shahar.sh",
+    ]
 
     # Storage
     storage_backend: Literal["memory", "r2"] = "memory"
