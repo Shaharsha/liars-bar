@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     allowed_origins: list[str] = [
         "http://localhost:5173",
         "http://localhost:8000",
-        "https://liars-bar-gem4.onrender.com",
+        "https://liars-bar-kadf.onrender.com",
         "https://liar.shahar.sh",
     ]
 
