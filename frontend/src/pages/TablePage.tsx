@@ -6,6 +6,8 @@ import { useSessionStore } from '../stores/session'
 import { useGameStore } from '../stores/game'
 import { wsClient } from '../api/ws'
 
+const AVATAR_COLORS = ['#D4A853', '#E07B6C', '#6CB4E0', '#8BD4A0']
+
 export default function TablePage() {
   const { tableId } = useParams<{ tableId: string }>()
   const navigate = useNavigate()
@@ -39,8 +41,18 @@ export default function TablePage() {
   if (!table) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-noise">
-        <div className="text-text-secondary font-accent tracking-widest text-sm" style={{ animation: 'pulse-gold 2s infinite' }}>
-          Connecting...
+        <div className="ambient-light" />
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="flex gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-2.5 h-2.5 rounded-full bg-accent-gold/50"
+                style={{ animation: `dot-bounce 1.2s ease-in-out ${i * 0.15}s infinite` }}
+              />
+            ))}
+          </div>
+          <span className="text-text-secondary font-accent tracking-widest text-sm">Connecting...</span>
         </div>
       </div>
     )
@@ -48,47 +60,91 @@ export default function TablePage() {
 
   return (
     <div className="min-h-dvh flex flex-col bg-noise">
+      <div className="ambient-light" />
+
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border-subtle bg-bg-surface/50">
-        <button onClick={() => navigate('/lobby')} className="text-text-secondary hover:text-accent-gold transition-colors cursor-pointer">
-          &larr;
+      <div className="relative z-10 flex items-center gap-3 px-5 py-4 border-b border-border-subtle bg-bg-surface/50 backdrop-blur-sm">
+        <button onClick={() => navigate('/lobby')} className="text-text-secondary hover:text-accent-gold transition-colors w-10 h-10 flex items-center justify-center -ml-2 rounded-xl active:bg-bg-elevated/50">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
         </button>
-        <h1 className="font-accent text-accent-gold flex-1 tracking-wide">{table.name}</h1>
-        <span className="text-xs text-accent-gold/60 uppercase tracking-wider bg-accent-gold/5 px-2 py-1 rounded-full border border-accent-gold/10">
-          {table.game_mode === 'deck' ? 'Deck' : 'Dice'}
-        </span>
+        <div className="flex-1 min-w-0">
+          <h1 className="font-accent text-accent-gold tracking-wide truncate">{table.name}</h1>
+          <span className="text-[10px] text-text-secondary/60 uppercase tracking-[0.15em] font-accent">
+            {table.game_mode === 'deck' ? '\u2660 Liar\'s Deck' : '\u2684 Liar\'s Dice'}
+          </span>
+        </div>
+      </div>
+
+      {/* Status */}
+      <div className="relative z-10 text-center py-5">
+        {playerCount < 2 ? (
+          <div className="flex items-center justify-center gap-2">
+            <div className="flex gap-1">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-accent-gold/60"
+                  style={{ animation: `dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                />
+              ))}
+            </div>
+            <span className="text-text-secondary text-sm font-accent tracking-wide">Waiting for players</span>
+          </div>
+        ) : (
+          <span className="text-accent-gold/80 text-sm font-accent tracking-wide">
+            {playerCount} player{playerCount > 1 ? 's' : ''} ready
+          </span>
+        )}
       </div>
 
       {/* Player grid */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
-        <p className="text-text-secondary text-sm mb-6 font-accent tracking-wide">
-          {playerCount < 2 ? 'Waiting for players...' : `${playerCount} players ready`}
-        </p>
+      <div className="relative z-10 flex-1 flex items-center justify-center px-6">
         <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
           {Array.from({ length: table.max_players }).map((_, i) => {
             const player = table.players[i]
+            const color = AVATAR_COLORS[i % AVATAR_COLORS.length]
             return (
               <div
                 key={i}
-                className={`aspect-square rounded-xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 ${
+                className={`aspect-square rounded-2xl border-2 flex flex-col items-center justify-center gap-2.5 transition-all duration-500 ${
                   player
-                    ? 'bg-bg-surface border-accent-gold/20 glow-gold'
-                    : 'bg-bg-primary/50 border-border-subtle border-dashed'
+                    ? 'bg-bg-surface/80 border-border-subtle'
+                    : 'bg-bg-primary/30 border-border-subtle/30 border-dashed'
                 }`}
-                style={player ? { animation: 'fade-in 0.3s ease-out' } : undefined}
+                style={
+                  player
+                    ? { animation: 'fade-in 0.4s ease-out', borderColor: `${color}20` }
+                    : { animation: 'waiting-pulse 3s ease-in-out infinite' }
+                }
               >
                 {player ? (
                   <>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-gold/30 to-accent-gold/10 flex items-center justify-center text-accent-gold font-bold text-xl border border-accent-gold/20">
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold border-2"
+                      style={{
+                        background: `linear-gradient(135deg, ${color}30, ${color}10)`,
+                        borderColor: `${color}40`,
+                        color: color,
+                      }}
+                    >
                       {player.nickname[0].toUpperCase()}
                     </div>
                     <span className="text-text-primary text-sm font-medium">{player.nickname}</span>
                     {player.session_id === table.host_session_id && (
-                      <span className="text-[10px] text-accent-gold font-accent tracking-wider uppercase">Host</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-accent tracking-wider uppercase bg-accent-gold/10 text-accent-gold border border-accent-gold/15">
+                        Host
+                      </span>
                     )}
                   </>
                 ) : (
-                  <span className="text-text-secondary/30 text-xs tracking-wider">Empty</span>
+                  <>
+                    <div className="w-14 h-14 rounded-full border-2 border-dashed border-border-subtle/30 flex items-center justify-center">
+                      <span className="text-text-secondary/20 text-2xl">+</span>
+                    </div>
+                    <span className="text-text-secondary/25 text-xs tracking-wider">Waiting</span>
+                  </>
                 )}
               </div>
             )
@@ -97,23 +153,27 @@ export default function TablePage() {
       </div>
 
       {/* Bottom actions */}
-      <div className="px-4 py-4 space-y-3 border-t border-border-subtle">
+      <div className="relative z-10 px-5 py-5 space-y-3 border-t border-border-subtle bg-bg-surface/30 backdrop-blur-sm" style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}>
         <button
           onClick={handleCopyLink}
-          className="w-full bg-bg-surface border border-border-subtle rounded-xl py-2.5 text-text-secondary text-sm hover:text-accent-gold hover:border-accent-gold/20 transition-all active:scale-[0.98] cursor-pointer"
+          className="w-full bg-bg-surface border border-border-subtle rounded-2xl py-3.5 text-text-secondary text-sm font-medium flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
         >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
           {copied ? 'Copied!' : 'Copy invite link'}
         </button>
         {isHost ? (
           <button
             onClick={handleStart}
             disabled={!canStart}
-            className="w-full bg-gradient-to-r from-accent-gold to-accent-amber rounded-xl py-3 text-bg-primary font-bold uppercase disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97] transition-all cursor-pointer hover:glow-gold-lg"
+            className="w-full bg-gradient-to-r from-accent-gold to-accent-amber rounded-2xl py-4 text-bg-primary font-bold text-base uppercase disabled:opacity-25 disabled:cursor-not-allowed active:scale-[0.97] transition-all"
           >
-            Start Game
+            {canStart ? 'Start Game' : `Need ${2 - playerCount} more player${2 - playerCount > 1 ? 's' : ''}`}
           </button>
         ) : (
-          <div className="text-center text-text-secondary text-sm py-3 font-accent tracking-wide">
+          <div className="text-center text-text-secondary/60 text-sm py-3 font-accent tracking-wide">
             Waiting for host to start...
           </div>
         )}
