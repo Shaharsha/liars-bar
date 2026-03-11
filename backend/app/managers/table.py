@@ -50,6 +50,9 @@ class TableManager:
 
         return table
 
+    def delete_table(self, table_id: str):
+        self.tables.pop(table_id, None)
+
     def get_table(self, table_id: str) -> Table | None:
         return self.tables.get(table_id)
 

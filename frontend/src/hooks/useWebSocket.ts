@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { wsClient } from '../api/ws'
 import { useSessionStore } from '../stores/session'
 import { useTableStore } from '../stores/table'
@@ -6,6 +7,7 @@ import { useGameStore } from '../stores/game'
 
 export function useWebSocket(tableId: string) {
   const sessionId = useSessionStore((s) => s.sessionId)
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!sessionId || !tableId) return
@@ -21,6 +23,10 @@ export function useWebSocket(tableId: string) {
       }),
       wsClient.on('player_left', (data) => {
         useTableStore.getState().removePlayer(data.session_id)
+      }),
+      wsClient.on('table_closed', () => {
+        useTableStore.getState().clear()
+        navigate('/lobby', { replace: true })
       }),
       wsClient.on('game_state', (data) => {
         useGameStore.getState().setGameState(data)
@@ -62,5 +68,5 @@ export function useWebSocket(tableId: string) {
       useTableStore.getState().clear()
       useGameStore.getState().clear()
     }
-  }, [tableId, sessionId])
+  }, [tableId, sessionId, navigate])
 }

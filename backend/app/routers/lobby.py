@@ -4,7 +4,9 @@ from uuid import uuid4
 from typing import Optional
 
 from app.managers.table import table_manager
+from app.managers.connection import connection_manager
 from app.models.table import GameMode
+from app.models.events import ServerEvent
 from app.config import settings
 
 router = APIRouter()
@@ -64,4 +66,9 @@ async def join_table(table_id: str, session_id: Optional[str] = Cookie(None)):
     table = await table_manager.join_table(table_id, session_id, nickname)
     if table is None:
         return {"error": "Table full or not found"}, 400
+    # Notify existing WebSocket connections about the new player
+    await connection_manager.broadcast_to_table(table_id, ServerEvent(
+        event="player_joined",
+        data={"session_id": session_id, "nickname": nickname}
+    ))
     return {"table": table.model_dump()}

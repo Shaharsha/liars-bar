@@ -6,9 +6,13 @@ class WebSocketClient {
   private reconnectAttempts = 0
   private maxReconnectAttempts = 5
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+  private shouldReconnect = true
 
   connect(tableId: string, sessionId: string) {
-    this.disconnect()
+    // Close existing connection but preserve listeners for reconnect
+    this._closeConnection()
+    this.shouldReconnect = true
+
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const host = window.location.host
     this.ws = new WebSocket(`${protocol}://${host}/ws/${tableId}?session_id=${sessionId}`)
@@ -20,6 +24,10 @@ class WebSocketClient {
     this.ws.onmessage = (event) => {
       try {
         const { event: eventName, data } = JSON.parse(event.data)
+        // Stop reconnecting if the table is gone
+        if (eventName === 'table_closed') {
+          this.shouldReconnect = false
+        }
         this.listeners.get(eventName)?.forEach((cb) => cb(data))
       } catch (e) {
         console.error('WS parse error:', e)
@@ -27,7 +35,7 @@ class WebSocketClient {
     }
 
     this.ws.onclose = () => {
-      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectTimeout = setTimeout(() => {
           this.reconnectAttempts++
           this.connect(tableId, sessionId)
@@ -54,13 +62,17 @@ class WebSocketClient {
     }
   }
 
-  disconnect() {
+  private _closeConnection() {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout)
       this.reconnectTimeout = null
     }
     this.ws?.close()
     this.ws = null
+  }
+
+  disconnect() {
+    this._closeConnection()
     this.reconnectAttempts = 0
     this.listeners.clear()
   }
