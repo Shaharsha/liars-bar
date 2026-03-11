@@ -11,7 +11,7 @@ FROM python:3.12-slim AS production
 RUN pip install --no-cache-dir poetry
 WORKDIR /app
 COPY backend/pyproject.toml backend/poetry.lock* ./
-RUN poetry config virtualenvs.create false && poetry install --only main --no-interaction
+RUN poetry config virtualenvs.create false && poetry install --only main --no-root --no-interaction
 COPY backend/ .
 COPY --from=frontend-build /app/frontend/dist ./static
 
