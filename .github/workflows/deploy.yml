@@ -27,7 +27,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/poetry.lock') }}
           restore-keys: ${{ runner.os }}-pip-
 
-      - run: pip install poetry && cd backend && poetry install
+      - run: pip install poetry && cd backend && poetry install --no-root
 
       - run: cd backend && poetry run pytest tests/ -x
 
