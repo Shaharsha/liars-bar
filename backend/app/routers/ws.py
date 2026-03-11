@@ -131,6 +131,21 @@ async def websocket_endpoint(websocket: WebSocket, table_id: str, session_id: st
                 task = asyncio.create_task(_delayed_remove(table_id, session_id))
                 _pending_removals[session_id] = task
 
+async def _send_events(events: list[tuple[str, ServerEvent]], table_id: str):
+    """Send a list of (target, event) tuples, then clean up if game is over."""
+    for target, evt in events:
+        if target == "broadcast":
+            await connection_manager.broadcast_to_table(table_id, evt)
+        else:
+            await connection_manager.send_to_player(target, evt)
+
+    # Check if game just ended — clean up table and engine
+    engine = game_manager.active_games.get(table_id)
+    if engine and engine.is_game_over():
+        game_manager.end_game(table_id)
+        table_manager.delete_table(table_id)
+
+
 async def handle_client_event(event: ClientEvent, session_id: str, table_id: str):
     match event.event:
         case "start_game":
@@ -147,43 +162,11 @@ async def handle_client_event(event: ClientEvent, session_id: str, table_id: str
                 return
 
             events = game_manager.start_game(table)
-            for target, evt in events:
-                if target == "broadcast":
-                    await connection_manager.broadcast_to_table(table_id, evt)
-                else:
-                    await connection_manager.send_to_player(target, evt)
+            await _send_events(events, table_id)
 
-        case "play_cards":
+        case "play_cards" | "call_liar" | "place_bid" | "challenge_bid":
             events = game_manager.handle_action(table_id, session_id, event.event, event.data)
-            for target, evt in events:
-                if target == "broadcast":
-                    await connection_manager.broadcast_to_table(table_id, evt)
-                else:
-                    await connection_manager.send_to_player(target, evt)
-
-        case "call_liar":
-            events = game_manager.handle_action(table_id, session_id, event.event, event.data)
-            for target, evt in events:
-                if target == "broadcast":
-                    await connection_manager.broadcast_to_table(table_id, evt)
-                else:
-                    await connection_manager.send_to_player(target, evt)
-
-        case "place_bid":
-            events = game_manager.handle_action(table_id, session_id, event.event, event.data)
-            for target, evt in events:
-                if target == "broadcast":
-                    await connection_manager.broadcast_to_table(table_id, evt)
-                else:
-                    await connection_manager.send_to_player(target, evt)
-
-        case "challenge_bid":
-            events = game_manager.handle_action(table_id, session_id, event.event, event.data)
-            for target, evt in events:
-                if target == "broadcast":
-                    await connection_manager.broadcast_to_table(table_id, evt)
-                else:
-                    await connection_manager.send_to_player(target, evt)
+            await _send_events(events, table_id)
 
         case "ping":
             await connection_manager.send_to_player(session_id, ServerEvent(event="pong", data={}))
