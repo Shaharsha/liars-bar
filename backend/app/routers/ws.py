@@ -103,6 +103,14 @@ async def websocket_endpoint(websocket: WebSocket, table_id: str, session_id: st
                 event="table_state",
                 data=_build_table_state(table),
             ))
+            # If game is in progress, also send current game state
+            if table.status == "in_game":
+                game_state = game_manager.get_state_for_player(table_id, session_id)
+                if game_state:
+                    await connection_manager.send_to_player(session_id, ServerEvent(
+                        event="game_state",
+                        data=game_state,
+                    ))
 
         while True:
             raw = await websocket.receive_json()
