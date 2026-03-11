@@ -6,8 +6,8 @@ class Settings(BaseSettings):
     allowed_origins: list[str] = [
         "http://localhost:5173",
         "http://localhost:8000",
-        "https://liars-bar-hcu6.onrender.com",
-        "https://lair.shahar.sh",
+        "https://liars-bar-gem4.onrender.com",
+        "https://liar.shahar.sh",
     ]
 
     # Storage
