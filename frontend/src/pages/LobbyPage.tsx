@@ -11,6 +11,7 @@ export default function LobbyPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [tableName, setTableName] = useState('')
   const [gameMode, setGameMode] = useState<'deck' | 'dice'>('deck')
+  const [showInfo, setShowInfo] = useState<'deck' | 'dice' | null>(null)
 
   useEffect(() => {
     loadTables()
@@ -119,27 +120,50 @@ export default function LobbyPage() {
               className="w-full bg-bg-primary border border-border-subtle rounded-xl px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-gold transition-all"
               autoFocus
             />
-            <div className="flex gap-2">
-              <button
-                onClick={() => setGameMode('deck')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  gameMode === 'deck'
-                    ? 'bg-accent-gold/20 border border-accent-gold text-accent-gold'
-                    : 'bg-bg-primary border border-border-subtle text-text-secondary'
-                }`}
-              >
-                Liar's Deck
-              </button>
-              <button
-                onClick={() => setGameMode('dice')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  gameMode === 'dice'
-                    ? 'bg-accent-gold/20 border border-accent-gold text-accent-gold'
-                    : 'bg-bg-primary border border-border-subtle text-text-secondary'
-                }`}
-              >
-                Liar's Dice
-              </button>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setGameMode('deck')}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    gameMode === 'deck'
+                      ? 'bg-accent-gold/20 border border-accent-gold text-accent-gold'
+                      : 'bg-bg-primary border border-border-subtle text-text-secondary'
+                  }`}
+                >
+                  Liar's Deck
+                  <span
+                    onClick={(e) => { e.stopPropagation(); setShowInfo(showInfo === 'deck' ? null : 'deck') }}
+                    className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-current text-[10px] opacity-60 hover:opacity-100 transition-opacity cursor-help"
+                  >i</span>
+                </button>
+                <button
+                  onClick={() => setGameMode('dice')}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    gameMode === 'dice'
+                      ? 'bg-accent-gold/20 border border-accent-gold text-accent-gold'
+                      : 'bg-bg-primary border border-border-subtle text-text-secondary'
+                  }`}
+                >
+                  Liar's Dice
+                  <span
+                    onClick={(e) => { e.stopPropagation(); setShowInfo(showInfo === 'dice' ? null : 'dice') }}
+                    className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-current text-[10px] opacity-60 hover:opacity-100 transition-opacity cursor-help"
+                  >i</span>
+                </button>
+              </div>
+              {showInfo && (
+                <div className="bg-bg-primary border border-border-subtle rounded-xl px-3 py-2.5 text-xs text-text-secondary leading-relaxed animate-in fade-in">
+                  {showInfo === 'deck' ? (
+                    <>
+                      <span className="text-accent-gold font-medium">Liar's Deck:</span> Play cards face-down, claiming they match the table card. Bluff or play honest — but if someone calls "LIAR!" and catches you, you face the revolver. Jokers are wild!
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-accent-gold font-medium">Liar's Dice:</span> Roll hidden dice and bid on the total count across all players. Raise the bid or challenge the last bidder. 1s are wild! Wrong calls mean a pull of the trigger.
+                    </>
+                  )}
+                </div>
+              )}
             </div>
             <button
               onClick={handleCreate}
