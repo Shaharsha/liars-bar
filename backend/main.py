@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 from contextlib import asynccontextmanager
 import os
 
@@ -22,6 +24,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# SPA fallback middleware — must be added before static files mount
+if settings.env == "prod" and os.path.isdir("static"):
+    class SPAMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request: Request, call_next):
+            response = await call_next(request)
+            path = request.url.path
+            # If 404 and not an API/WS route, serve index.html
+            if response.status_code == 404 and not path.startswith(("/api", "/ws")):
+                return FileResponse("static/index.html")
+            return response
+
+    app.add_middleware(SPAMiddleware)
+
 @app.get("/api/health")
 async def health():
     return {"status": "ok"}
@@ -29,13 +44,6 @@ async def health():
 app.include_router(lobby.router, prefix="/api")
 app.include_router(ws.router)
 
-# Serve React build in production
+# Serve React build static files in production
 if settings.env == "prod" and os.path.isdir("static"):
-    app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
-
-    @app.get("/{full_path:path}")
-    async def serve_spa(request: Request, full_path: str):
-        file_path = os.path.join("static", full_path)
-        if os.path.isfile(file_path):
-            return FileResponse(file_path)
-        return FileResponse("static/index.html")
+    app.mount("/", StaticFiles(directory="static"), name="static")
