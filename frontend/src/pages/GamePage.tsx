@@ -57,13 +57,18 @@ export default function GamePage() {
   return (
     <div className="min-h-dvh flex flex-col bg-noise">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle bg-bg-surface/50">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle bg-bg-surface/60">
         <div className="flex items-center gap-2">
-          <span className="text-accent-gold font-accent text-xs tracking-wider">ROUND {gameState.round_number}</span>
+          <span className="text-accent-gold/60 font-accent text-[10px] tracking-[0.2em] uppercase">Round</span>
+          <span className="text-accent-gold font-accent text-sm font-bold">{gameState.round_number}</span>
         </div>
-        <div className={`text-xs font-medium px-3 py-1 rounded-full transition-all ${
-          isMyTurn ? 'bg-accent-gold/15 text-accent-gold border border-accent-gold/30' : 'text-text-secondary'
-        }`}>
+        <div className={`text-xs font-medium px-3 py-1 rounded-full transition-all duration-300 ${
+          isMyTurn
+            ? 'bg-accent-gold/15 text-accent-gold border border-accent-gold/30 glow-gold'
+            : 'text-text-secondary bg-bg-elevated/50'
+        }`}
+          style={isMyTurn ? { animation: 'pulse-gold 2s infinite' } : undefined}
+        >
           {isMyTurn ? 'Your turn' : `${gameState.players.find(p => p.session_id === gameState.current_turn)?.nickname || '...'}'s turn`}
         </div>
         {me?.revolver && me.is_alive && (
@@ -177,28 +182,40 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
   return (
     <>
       {/* Board */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 gap-5">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 gap-4 table-felt rounded-2xl mx-3 my-2">
         {/* Table card */}
-        <div className="text-center space-y-2">
-          <span className="text-text-secondary text-[10px] uppercase tracking-[0.3em]">Table Card</span>
-          <div
-            className="text-4xl font-accent text-accent-gold text-glow-gold"
-            style={{ animation: 'pulse-gold 3s ease-in-out infinite' }}
-          >
-            {gameState.table_card.toUpperCase()}
-          </div>
-          <div className="ornament text-accent-gold/20 max-w-[140px] mx-auto">
-            <span className="text-accent-gold/30 text-[8px]">&#9830;</span>
+        <div className="text-center space-y-1.5">
+          <span className="text-text-secondary/50 text-[9px] uppercase tracking-[0.3em] font-accent">Table Card</span>
+          <div className="w-20 h-28 card-front rounded-xl flex flex-col items-center justify-center mx-auto border-accent-gold/20" style={{ borderColor: 'rgba(212, 168, 83, 0.2)' }}>
+            <span
+              className="text-3xl font-bold text-accent-gold"
+              style={{ animation: 'pulse-gold 3s ease-in-out infinite' }}
+            >
+              {cardLabel(gameState.table_card)}
+            </span>
+            <span className="text-sm text-accent-gold/40 mt-0.5">{cardSuit(gameState.table_card)}</span>
           </div>
         </div>
 
-        {/* Last play info */}
+        {/* Face-down played cards pile */}
         {gameState.last_play && (
-          <div className="bg-bg-surface/60 border border-border-subtle rounded-lg px-4 py-2 text-text-secondary text-sm">
-            <span className="text-text-primary font-medium">
-              {gameState.players.find(p => p.session_id === gameState.last_play?.player_id)?.nickname}
-            </span>
-            {' '}played {gameState.last_play.count} card{gameState.last_play.count > 1 ? 's' : ''}
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex justify-center -space-x-3">
+              {Array.from({ length: gameState.last_play.count }).map((_, i) => (
+                <div
+                  key={i}
+                  className="card-back w-10 h-14 rounded-lg"
+                  style={{
+                    transform: `rotate(${(i - Math.floor(gameState.last_play!.count / 2)) * 8}deg)`,
+                    animation: `fade-in 0.2s ease-out ${i * 0.05}s both`
+                  }}
+                />
+              ))}
+            </div>
+            <p className="text-text-secondary/60 text-xs">
+              <span className="text-text-secondary">{gameState.players.find(p => p.session_id === gameState.last_play?.player_id)?.nickname}</span>
+              {' '}played {gameState.last_play.count}
+            </p>
           </div>
         )}
       </div>
@@ -210,16 +227,28 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
             <button
               key={i}
               onClick={() => isMyTurn && toggleCard(i)}
-              className={`w-[58px] h-[84px] rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all duration-200 ${
+              className={`w-[60px] h-[88px] rounded-lg relative transition-all duration-200 ${
                 selectedCards.includes(i)
                   ? 'card-selected -translate-y-4'
                   : 'card-front hover:border-accent-gold/30'
               } ${!isMyTurn ? 'opacity-50' : 'active:scale-95 cursor-pointer'}`}
             >
-              <span className={`text-xl font-bold ${isMatch(card) ? 'text-accent-gold' : 'text-accent-red/80'}`}>
+              {/* Top-left corner */}
+              <span className={`absolute top-1.5 left-2 text-[11px] font-bold leading-none ${isMatch(card) ? 'text-accent-gold' : 'text-accent-red/80'}`}>
                 {cardLabel(card)}
               </span>
-              <span className={`text-xs ${isMatch(card) ? 'text-accent-gold/50' : 'text-accent-red/30'}`}>
+              <span className={`absolute top-[14px] left-2 text-[9px] leading-none ${isMatch(card) ? 'text-accent-gold/50' : 'text-accent-red/30'}`}>
+                {cardSuit(card)}
+              </span>
+              {/* Center */}
+              <span className={`absolute inset-0 flex items-center justify-center text-2xl font-bold ${isMatch(card) ? 'text-accent-gold' : 'text-accent-red/70'}`}>
+                {card === 'joker' ? '\u2605' : cardSuit(card)}
+              </span>
+              {/* Bottom-right corner (inverted) */}
+              <span className={`absolute bottom-1.5 right-2 text-[11px] font-bold leading-none rotate-180 ${isMatch(card) ? 'text-accent-gold' : 'text-accent-red/80'}`}>
+                {cardLabel(card)}
+              </span>
+              <span className={`absolute bottom-[14px] right-2 text-[9px] leading-none rotate-180 ${isMatch(card) ? 'text-accent-gold/50' : 'text-accent-red/30'}`}>
                 {cardSuit(card)}
               </span>
             </button>
@@ -251,6 +280,25 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
   )
 }
 
+// ============ CSS Dice Component ============
+
+function Die({ value, small }: { value: number; small?: boolean }) {
+  const sizeClass = small ? 'die-sm' : 'die'
+  const faceClass = `die-${value}`
+  const pips = Array.from({ length: value }, (_, i) => (
+    <div key={i} className="die-pip" />
+  ))
+  return (
+    <div className={`${sizeClass} ${faceClass}`}>
+      {pips}
+    </div>
+  )
+}
+
+function diceLabel(val: number) {
+  return ['\u2680', '\u2680', '\u2681', '\u2682', '\u2683', '\u2684', '\u2685'][val] || '?'
+}
+
 // ============ Dice Board ============
 
 function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn: boolean }) {
@@ -260,8 +308,6 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
   const canChallenge = isMyTurn && gameState.current_bid !== null
 
   useEffect(() => { setPending(false) }, [gameState])
-
-  const diceEmoji = (val: number) => ['\u2680', '\u2680', '\u2681', '\u2682', '\u2683', '\u2684', '\u2685'][val] || '?'
 
   const isValidBid = () => {
     if (!gameState.current_bid) return bidQuantity >= 1 && bidFace >= 2 && bidFace <= 6
@@ -285,8 +331,9 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
 
   return (
     <>
-      {/* Bid history */}
-      <div className="flex-1 px-4 py-2 overflow-y-auto">
+      {/* Board area with bid history */}
+      <div className="flex-1 px-4 py-2 overflow-y-auto table-felt rounded-2xl mx-3 my-2">
+        <p className="text-text-secondary/40 text-[9px] uppercase tracking-[0.3em] font-accent text-center pt-2 pb-1">Bid History</p>
         <div className="space-y-1.5">
           {gameState.bid_history.map((bid, i) => (
             <div
@@ -294,7 +341,7 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
               className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${
                 i === gameState.bid_history.length - 1
                   ? 'bg-accent-gold/10 border border-accent-gold/20'
-                  : 'bg-bg-surface/50'
+                  : 'bg-bg-surface/40'
               }`}
               style={i === gameState.bid_history.length - 1 ? { animation: 'slide-up 0.2s ease-out' } : undefined}
             >
@@ -302,25 +349,22 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
                 {gameState.players.find(p => p.session_id === bid.player_id)?.nickname}
               </span>
               <span className="text-text-primary font-mono font-bold text-lg">
-                {bid.quantity}&times; {diceEmoji(bid.face_value)}
+                {bid.quantity}&times;
               </span>
+              <Die value={bid.face_value} small />
             </div>
           ))}
           {gameState.bid_history.length === 0 && (
-            <div className="text-center text-text-secondary/40 py-6 text-sm font-accent tracking-wider">No bids yet</div>
+            <div className="text-center text-text-secondary/30 py-8 text-sm font-accent tracking-wider">No bids yet</div>
           )}
         </div>
       </div>
 
       {/* Your dice */}
       <div className="flex justify-center gap-3 px-4 py-4">
-        {gameState.your_dice.map((die, i) => (
-          <div
-            key={i}
-            className="die w-12 h-12 flex items-center justify-center text-2xl font-bold"
-            style={{ animation: `fade-in 0.3s ease-out ${i * 0.08}s both` }}
-          >
-            {diceEmoji(die)}
+        {gameState.your_dice.map((val, i) => (
+          <div key={i} style={{ animation: `fade-in 0.3s ease-out ${i * 0.08}s both` }}>
+            <Die value={val} />
           </div>
         ))}
       </div>
@@ -348,13 +392,13 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
                 <button
                   key={face}
                   onClick={() => setBidFace(face)}
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg transition-all ${
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
                     bidFace === face
-                      ? 'bg-accent-gold/20 border-2 border-accent-gold text-accent-gold'
-                      : 'bg-bg-elevated border border-border-subtle hover:border-accent-gold/30'
+                      ? 'ring-2 ring-accent-gold ring-offset-1 ring-offset-bg-primary'
+                      : 'opacity-60 hover:opacity-90'
                   }`}
                 >
-                  {diceEmoji(face)}
+                  <Die value={face} small />
                 </button>
               ))}
             </div>
@@ -365,7 +409,7 @@ function DiceBoard({ gameState, isMyTurn }: { gameState: DiceGameState; isMyTurn
               disabled={!isValidBid() || pending}
               className="flex-1 bg-gradient-to-r from-accent-gold to-accent-amber rounded-xl py-3 text-bg-primary font-bold uppercase disabled:opacity-20 active:scale-[0.97] transition-all"
             >
-              Bid {bidQuantity}&times; {diceEmoji(bidFace)}
+              Bid {bidQuantity}&times; {diceLabel(bidFace)}
             </button>
             {canChallenge && (
               <button
@@ -431,21 +475,25 @@ function RevealOverlay({ cards, wasLying }: { cards: string[]; wasLying: boolean
 }
 
 function DiceRevealOverlay({ data }: { data: any }) {
-  const diceEmoji = (val: number) => ['\u2680', '\u2680', '\u2681', '\u2682', '\u2683', '\u2684', '\u2685'][val] || '?'
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm" style={{ animation: 'fade-in 0.2s' }}>
       <div className="bg-bg-surface border border-border-subtle rounded-2xl p-8 text-center space-y-5 max-w-sm w-full mx-4" style={{ animation: 'slide-up-bounce 0.4s ease-out' }}>
-        <h2 className={`text-2xl font-accent font-bold ${data.bid_was_correct ? 'text-accent-green' : 'text-accent-red text-glow-red'}`}>
+        <h2
+          className={`text-2xl font-accent font-bold ${data.bid_was_correct ? 'text-accent-green' : 'text-accent-red text-glow-red'}`}
+          style={{ animation: 'slam-in 0.4s ease-out' }}
+        >
           {data.bid_was_correct ? 'Bid Was Right!' : 'Bid Was Wrong!'}
         </h2>
         <p className="text-text-secondary text-sm">
           Actual count: <span className="text-accent-gold font-bold text-lg">{data.actual_count}</span>
         </p>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {Object.entries(data.all_dice).map(([pid, dice]: [string, any]) => (
-            <div key={pid} className="flex gap-1.5 justify-center">
+            <div key={pid} className="flex gap-2 justify-center">
               {dice.map((d: number, i: number) => (
-                <span key={i} className="die w-8 h-8 flex items-center justify-center text-base">{diceEmoji(d)}</span>
+                <div key={i} style={{ animation: `slide-up 0.3s ease-out ${i * 0.08}s both` }}>
+                  <Die value={d} small />
+                </div>
               ))}
             </div>
           ))}

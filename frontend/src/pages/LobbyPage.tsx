@@ -46,147 +46,227 @@ export default function LobbyPage() {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col">
+    <div className="min-h-dvh flex flex-col bg-noise">
+      <div className="ambient-light" />
+
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
-        <h1 className="text-xl font-accent text-accent-gold">LIAR'S BAR</h1>
-        <span className="text-text-secondary text-sm bg-bg-surface px-3 py-1 rounded-full">{nickname}</span>
+      <div className="relative z-10 px-5 py-4 border-b border-border-subtle bg-bg-surface/50 backdrop-blur-sm">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-accent text-accent-gold tracking-wider">LIAR'S BAR</h1>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent-gold/30 to-accent-gold/10 flex items-center justify-center text-[11px] font-bold text-accent-gold border border-accent-gold/20">
+              {nickname?.[0]?.toUpperCase()}
+            </div>
+            <span className="text-text-secondary text-sm">{nickname}</span>
+          </div>
+        </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="px-4 pt-3">
-          <p className="text-accent-red text-sm text-center">{error}</p>
+        <div className="relative z-10 px-5 pt-3">
+          <p className="text-accent-red text-sm text-center bg-accent-red/5 border border-accent-red/20 rounded-xl py-2 px-3">{error}</p>
         </div>
       )}
 
       {/* Table list */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        <h2 className="text-text-secondary text-xs uppercase tracking-widest mb-2">Open Tables</h2>
+      <div className="relative z-10 flex-1 overflow-y-auto px-5 py-5 space-y-3">
+        <h2 className="text-text-secondary/60 text-[10px] uppercase tracking-[0.25em] mb-3 font-accent">Open Tables</h2>
 
         {isLoading && tables.length === 0 && (
-          <div className="text-center text-text-secondary py-12">Loading...</div>
+          <div className="text-center text-text-secondary py-16">
+            <div className="flex justify-center gap-1.5 mb-3">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-2 h-2 rounded-full bg-accent-gold/50"
+                  style={{ animation: `dot-bounce 1.2s ease-in-out ${i * 0.15}s infinite` }}
+                />
+              ))}
+            </div>
+            <span className="text-sm">Loading tables...</span>
+          </div>
         )}
 
         {!isLoading && tables.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-text-secondary mb-2">No tables yet</p>
-            <p className="text-text-secondary/60 text-sm">Be the first to host!</p>
+          <div className="text-center py-16 space-y-4">
+            {/* Empty state — fanned cards */}
+            <div className="flex justify-center items-end gap-0 mb-6">
+              <div className="w-10 h-14 rounded-lg card-back -rotate-[20deg] -mr-3 opacity-20" />
+              <div className="w-10 h-14 rounded-lg card-back -rotate-[8deg] -mr-3 opacity-25" />
+              <div className="w-10 h-14 rounded-lg card-front flex items-center justify-center text-accent-gold/40 text-sm font-bold opacity-30">?</div>
+              <div className="w-10 h-14 rounded-lg card-back rotate-[8deg] -ml-3 opacity-25" />
+              <div className="w-10 h-14 rounded-lg card-back rotate-[20deg] -ml-3 opacity-20" />
+            </div>
+            <div>
+              <p className="text-text-secondary font-accent tracking-wide">No tables yet</p>
+              <p className="text-text-secondary/40 text-sm mt-1">Create one and invite your friends</p>
+            </div>
           </div>
         )}
 
         {tables.map((table) => (
           <div
             key={table.table_id}
-            className="bg-bg-surface border border-border-subtle rounded-xl p-4 transition-all duration-200 hover:border-accent-gold/30"
+            className="bg-bg-surface/80 border border-border-subtle rounded-2xl p-4 transition-all duration-200 active:scale-[0.98]"
+            style={{ animation: 'fade-in 0.3s ease-out' }}
           >
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <h3 className="font-semibold text-text-primary">{table.name}</h3>
-                <span className="text-xs text-accent-gold uppercase tracking-wider">
-                  {table.game_mode === 'deck' ? 'Liar\'s Deck' : 'Liar\'s Dice'}
+            <div className="flex items-start gap-3 mb-3">
+              {/* Game mode icon */}
+              <div className="w-10 h-10 rounded-xl bg-accent-gold/8 border border-accent-gold/10 flex items-center justify-center text-lg shrink-0">
+                {table.game_mode === 'deck' ? '\u2660' : '\u2684'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-text-primary truncate">{table.name}</h3>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] text-accent-gold/70 uppercase tracking-[0.15em] font-accent">
+                    {table.game_mode === 'deck' ? "Liar's Deck" : "Liar's Dice"}
+                  </span>
+                  <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                    table.status === 'waiting'
+                      ? 'text-accent-green/80 bg-accent-green/8'
+                      : 'text-text-secondary/50 bg-bg-elevated/50'
+                  }`}>
+                    {table.status === 'waiting' ? 'Open' : 'Playing'}
+                  </span>
+                </div>
+              </div>
+              {/* Player count ring */}
+              <div className="relative w-10 h-10 shrink-0">
+                <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(212,168,83,0.08)" strokeWidth="2.5" />
+                  <circle
+                    cx="18" cy="18" r="14" fill="none" stroke="#D4A853" strokeWidth="2.5"
+                    strokeDasharray={`${(table.player_count / table.max_players) * 88} 88`}
+                    strokeLinecap="round"
+                    className="transition-all duration-500"
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-accent-gold">
+                  {table.player_count}
                 </span>
               </div>
-              <span className="text-xs text-text-secondary bg-bg-elevated px-2 py-1 rounded-full">
-                {table.player_count}/{table.max_players}
-              </span>
             </div>
-            <div className="flex items-center gap-1.5 mb-3">
+
+            {/* Player pills */}
+            <div className="flex flex-wrap items-center gap-1.5 mb-3">
               {table.player_nicknames.map((name, i) => (
-                <span key={i} className="text-xs bg-bg-elevated text-text-secondary px-2 py-0.5 rounded-full">
+                <span key={i} className="text-[11px] bg-bg-elevated/60 text-text-secondary px-2 py-0.5 rounded-full border border-border-subtle/50">
                   {name}
                 </span>
               ))}
+              {Array.from({ length: table.max_players - table.player_count }).map((_, i) => (
+                <span key={`empty-${i}`} className="text-[11px] text-text-secondary/20 px-2 py-0.5 rounded-full border border-dashed border-border-subtle/30">
+                  &bull;&bull;&bull;
+                </span>
+              ))}
             </div>
+
             {table.status === 'waiting' && table.player_count < table.max_players && (
               <button
                 onClick={() => handleJoin(table.table_id)}
-                className="w-full bg-accent-gold/10 border border-accent-gold/30 text-accent-gold rounded-lg py-2 text-sm font-medium hover:bg-accent-gold/20 transition-all active:scale-[0.98]"
+                className="w-full bg-accent-gold/8 border border-accent-gold/25 text-accent-gold rounded-xl py-3 text-sm font-semibold tracking-wide uppercase active:scale-[0.97] transition-all"
               >
                 Join Table
               </button>
             )}
+            {table.status === 'waiting' && table.player_count >= table.max_players && (
+              <div className="text-center text-accent-gold/40 text-xs py-2 font-accent tracking-wider">Table full</div>
+            )}
             {table.status === 'in_game' && (
-              <div className="text-center text-text-secondary/60 text-xs py-2">Game in progress</div>
+              <div className="text-center text-text-secondary/40 text-xs py-2 font-accent tracking-wider">Game in progress</div>
             )}
           </div>
         ))}
       </div>
 
       {/* Create table button */}
-      <div className="px-4 py-4 border-t border-border-subtle">
+      <div className="relative z-10 px-5 py-4 border-t border-border-subtle bg-bg-surface/30 backdrop-blur-sm" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
         <button
           onClick={() => setShowCreate(true)}
-          className="w-full bg-gradient-to-r from-accent-gold/90 to-accent-gold rounded-xl py-3 text-bg-primary font-bold tracking-wide uppercase active:scale-[0.98] transition-all"
+          className="w-full bg-gradient-to-r from-accent-gold to-accent-amber rounded-2xl py-4 text-bg-primary font-bold tracking-wide uppercase active:scale-[0.97] transition-all text-base"
         >
           + Create Table
         </button>
       </div>
 
-      {/* Create table modal */}
+      {/* Create table modal — bottom sheet style for mobile */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
-          <div className="relative z-10 w-full max-w-sm bg-bg-surface border border-border-subtle rounded-t-2xl sm:rounded-2xl p-6 space-y-4" style={{ animation: 'slide-up 0.2s ease-out' }}>
-            <h2 className="text-lg font-accent text-accent-gold text-center">Create Table</h2>
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowCreate(false); setShowInfo(null) }} />
+          <div
+            className="relative z-10 w-full max-w-md bg-bg-surface border-t border-border-subtle rounded-t-3xl p-6 space-y-5"
+            style={{ animation: 'slide-up 0.25s ease-out', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+          >
+            {/* Drag handle */}
+            <div className="w-10 h-1 rounded-full bg-border-subtle mx-auto -mt-1 mb-2" />
+
+            <div className="text-center">
+              <h2 className="text-lg font-accent text-accent-gold">Create Table</h2>
+              <div className="ornament max-w-[100px] mx-auto mt-1">
+                <span className="text-accent-gold/20 text-[6px]">&#9830;</span>
+              </div>
+            </div>
+
             <input
               type="text"
               value={tableName}
               onChange={(e) => setTableName(e.target.value)}
               placeholder="Table name"
               maxLength={24}
-              className="w-full bg-bg-primary border border-border-subtle rounded-xl px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-gold transition-all"
+              className="w-full bg-bg-primary/80 border border-border-subtle rounded-2xl px-4 py-4 text-text-primary placeholder:text-text-secondary/40 focus:outline-none focus:border-accent-gold/50 transition-all text-base"
               autoFocus
             />
-            <div className="space-y-2">
-              <div className="flex gap-2">
+
+            <div className="space-y-3">
+              <p className="text-text-secondary text-[10px] uppercase tracking-[0.2em] font-medium">Game Mode</p>
+              <div className="flex gap-3">
                 <button
                   onClick={() => setGameMode('deck')}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-4 rounded-2xl text-sm font-medium transition-all flex flex-col items-center gap-1.5 ${
                     gameMode === 'deck'
-                      ? 'bg-accent-gold/20 border border-accent-gold text-accent-gold'
-                      : 'bg-bg-primary border border-border-subtle text-text-secondary'
+                      ? 'bg-accent-gold/15 border-2 border-accent-gold text-accent-gold'
+                      : 'bg-bg-primary/60 border-2 border-border-subtle text-text-secondary'
                   }`}
                 >
-                  Liar's Deck
+                  <span className="text-2xl">{'\u2660'}</span>
+                  <span>Liar's Deck</span>
                   <span
                     onClick={(e) => { e.stopPropagation(); setShowInfo(showInfo === 'deck' ? null : 'deck') }}
-                    className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-current text-[10px] opacity-60 hover:opacity-100 transition-opacity cursor-help"
-                  >i</span>
+                    className="text-[10px] opacity-50 underline underline-offset-2"
+                  >How to play</span>
                 </button>
                 <button
                   onClick={() => setGameMode('dice')}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-4 rounded-2xl text-sm font-medium transition-all flex flex-col items-center gap-1.5 ${
                     gameMode === 'dice'
-                      ? 'bg-accent-gold/20 border border-accent-gold text-accent-gold'
-                      : 'bg-bg-primary border border-border-subtle text-text-secondary'
+                      ? 'bg-accent-gold/15 border-2 border-accent-gold text-accent-gold'
+                      : 'bg-bg-primary/60 border-2 border-border-subtle text-text-secondary'
                   }`}
                 >
-                  Liar's Dice
+                  <span className="text-2xl">{'\u2684'}</span>
+                  <span>Liar's Dice</span>
                   <span
                     onClick={(e) => { e.stopPropagation(); setShowInfo(showInfo === 'dice' ? null : 'dice') }}
-                    className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-current text-[10px] opacity-60 hover:opacity-100 transition-opacity cursor-help"
-                  >i</span>
+                    className="text-[10px] opacity-50 underline underline-offset-2"
+                  >How to play</span>
                 </button>
               </div>
               {showInfo && (
-                <div className="bg-bg-primary border border-border-subtle rounded-xl px-3 py-2.5 text-xs text-text-secondary leading-relaxed animate-in fade-in">
+                <div className="bg-bg-primary/60 border border-border-subtle rounded-2xl px-4 py-3 text-xs text-text-secondary/80 leading-relaxed" style={{ animation: 'fade-in 0.15s' }}>
                   {showInfo === 'deck' ? (
-                    <>
-                      <span className="text-accent-gold font-medium">Liar's Deck:</span> Play cards face-down, claiming they match the table card. Bluff or play honest — but if someone calls "LIAR!" and catches you, you face the revolver. Jokers are wild!
-                    </>
+                    <>Play cards face-down claiming they match the table card. Bluff or play honest — if someone calls <span className="text-accent-red font-medium">LIAR!</span> and catches you, you face the revolver. Jokers are wild!</>
                   ) : (
-                    <>
-                      <span className="text-accent-gold font-medium">Liar's Dice:</span> Roll hidden dice and bid on the total count across all players. Raise the bid or challenge the last bidder. 1s are wild! Wrong calls mean a pull of the trigger.
-                    </>
+                    <>Roll hidden dice and bid on the total count across all players. Raise the bid or challenge the last bidder. <span className="text-accent-gold font-medium">1s are wild!</span> Wrong calls mean a pull of the trigger.</>
                   )}
                 </div>
               )}
             </div>
+
             <button
               onClick={handleCreate}
               disabled={!tableName.trim()}
-              className="w-full bg-gradient-to-r from-accent-gold/90 to-accent-gold rounded-xl py-3 text-bg-primary font-bold uppercase disabled:opacity-40 active:scale-[0.98] transition-all"
+              className="w-full bg-gradient-to-r from-accent-gold to-accent-amber rounded-2xl py-4 text-bg-primary font-bold uppercase disabled:opacity-30 active:scale-[0.97] transition-all text-base"
             >
               Create
             </button>
