@@ -50,13 +50,13 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d '{"clearCache":"do_not_clear"}')
-          echo "deploy_id=$(echo "$DEPLOY" | jq -r '.id')" >> "$GITHUB_OUTPUT"
+          echo "deploy_id=$(echo "$DEPLOY" | jq -r '.deploy.id // .id')" >> "$GITHUB_OUTPUT"
 
       - name: Wait for deploy
         run: |
           for i in $(seq 1 60); do
             STATUS=$(curl -sf "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys/${{ steps.trigger.outputs.deploy_id }}" \
-              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.status')
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.deploy.status // .status')
             echo "Attempt $i: $STATUS"
             case "$STATUS" in
               live) echo "Deploy successful!"; exit 0 ;;
