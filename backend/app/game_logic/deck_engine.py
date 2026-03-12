@@ -99,7 +99,10 @@ class DeckEngine(GameEngine):
         if not card_indices or len(card_indices) > 3 or len(card_indices) > len(hand):
             return [(player_id, ServerEvent(event="error", data={"message": "Play 1-3 cards"}))]
 
-        # Validate indices
+        # Validate indices — no duplicates allowed
+        if len(set(card_indices)) != len(card_indices):
+            return [(player_id, ServerEvent(event="error", data={"message": "Duplicate card indices"}))]
+
         if any(i < 0 or i >= len(hand) for i in card_indices):
             return [(player_id, ServerEvent(event="error", data={"message": "Invalid card index"}))]
 
@@ -123,11 +126,13 @@ class DeckEngine(GameEngine):
             data={"player_id": player_id, "count": len(played_cards)}
         )))
 
-        # Send updated hand to the player
-        events.append((player_id, ServerEvent(
-            event="game_state",
-            data=self.get_state_for_player(player_id)
-        )))
+        # Send updated game state to all alive players
+        alive = [pid for pid in self.player_ids if pid not in self.eliminated]
+        for pid in alive:
+            events.append((pid, ServerEvent(
+                event="game_state",
+                data=self.get_state_for_player(pid)
+            )))
 
         # Advance turn
         self._advance_turn()

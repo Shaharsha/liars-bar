@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { useGameStore } from '../stores/game'
@@ -408,11 +408,13 @@ export default function GamePage() {
   const revealedDice = useGameStore((s) => s.revealedDice)
   const gameOver = useGameStore((s) => s.gameOver)
   const liarCalled = useGameStore((s) => s.liarCalled)
-  const clearOverlays = useGameStore((s) => s.clearOverlays)
+  const clearRevealedCards = useGameStore((s) => s.clearRevealedCards)
+  const clearRevealedDice = useGameStore((s) => s.clearRevealedDice)
+  const clearRouletteResult = useGameStore((s) => s.clearRouletteResult)
 
   useWebSocket(tableId!)
 
-  // Auto-clear liar called flash after 1.2s
+  // Auto-clear liar called flash after 2s
   useEffect(() => {
     if (liarCalled) {
       const t = setTimeout(() => useGameStore.getState().setLiarCalled(null), 2000)
@@ -423,24 +425,26 @@ export default function GamePage() {
   // Roulette: 3.5s phases + 5s result viewing = 8.5s total
   useEffect(() => {
     if (rouletteResult) {
-      const t = setTimeout(clearOverlays, 8500)
+      const t = setTimeout(clearRouletteResult, 8500)
       return () => clearTimeout(t)
     }
-  }, [rouletteResult, clearOverlays])
+  }, [rouletteResult, clearRouletteResult])
 
+  // Card reveal: 5.5s to read the result
   useEffect(() => {
     if (revealedCards) {
-      const t = setTimeout(clearOverlays, 5500)
+      const t = setTimeout(clearRevealedCards, 5500)
       return () => clearTimeout(t)
     }
-  }, [revealedCards, clearOverlays])
+  }, [revealedCards, clearRevealedCards])
 
+  // Dice reveal: 5.5s to read the result
   useEffect(() => {
     if (revealedDice) {
-      const t = setTimeout(clearOverlays, 5500)
+      const t = setTimeout(clearRevealedDice, 5500)
       return () => clearTimeout(t)
     }
-  }, [revealedDice, clearOverlays])
+  }, [revealedDice, clearRevealedDice])
 
   if (!gameState) {
     return (
@@ -540,8 +544,14 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
   const [pending, setPending] = useState(false)
   const canCallLiar = isMyTurn && gameState.last_play !== null
 
+  // Reset pending state and clear stale selections on new round
+  const roundRef = useRef(gameState.round_number)
   useEffect(() => {
     setPending(false)
+    if (gameState.round_number !== roundRef.current) {
+      setSelectedCards([])
+      roundRef.current = gameState.round_number
+    }
   }, [gameState])
 
   const toggleCard = (index: number) => {

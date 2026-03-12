@@ -111,6 +111,14 @@ class DiceEngine(GameEngine):
             data={"player_id": player_id, "quantity": quantity, "face_value": face_value}
         )))
 
+        # Send updated game state to all alive players
+        alive = [pid for pid in self.player_ids if pid not in self.eliminated]
+        for pid in alive:
+            events.append((pid, ServerEvent(
+                event="game_state",
+                data=self.get_state_for_player(pid)
+            )))
+
         # Advance turn
         self._advance_turn()
         current = self.turn_order[self.current_turn_idx]

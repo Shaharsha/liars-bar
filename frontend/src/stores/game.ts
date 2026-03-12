@@ -14,7 +14,9 @@ interface GameStore {
   setRevealedDice: (data: any) => void
   setGameOver: (data: any) => void
   setLiarCalled: (data: any) => void
-  clearOverlays: () => void
+  clearRevealedCards: () => void
+  clearRevealedDice: () => void
+  clearRouletteResult: () => void
   clear: () => void
 }
 
@@ -32,6 +34,8 @@ export const useGameStore = create<GameStore>((set) => ({
   setRevealedDice: (revealedDice) => set({ revealedDice }),
   setGameOver: (gameOver) => set({ gameOver }),
   setLiarCalled: (liarCalled) => set({ liarCalled }),
-  clearOverlays: () => set({ rouletteResult: null, revealedCards: null, revealedDice: null, liarCalled: null }),
+  clearRevealedCards: () => set({ revealedCards: null }),
+  clearRevealedDice: () => set({ revealedDice: null }),
+  clearRouletteResult: () => set({ rouletteResult: null }),
   clear: () => set({ gameState: null, rouletteResult: null, revealedCards: null, revealedDice: null, gameOver: null, liarCalled: null }),
 }))

@@ -1,4 +1,5 @@
 import asyncio
+import random
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.managers.connection import connection_manager
 from app.managers.table import table_manager
@@ -9,6 +10,11 @@ router = APIRouter()
 
 # Track pending removals so we can cancel them on reconnect
 _pending_removals: dict[str, asyncio.Task] = {}
+
+# Track turn timeout tasks per table
+_turn_timers: dict[str, asyncio.Task] = {}
+
+TURN_TIMEOUT_SECONDS = 30
 
 
 async def _delayed_remove(table_id: str, session_id: str):
@@ -37,6 +43,64 @@ async def _delayed_remove(table_id: str, session_id: str):
         pass
     finally:
         _pending_removals.pop(session_id, None)
+
+
+async def _turn_timeout(table_id: str):
+    """Auto-play for a player who times out."""
+    try:
+        await asyncio.sleep(TURN_TIMEOUT_SECONDS)
+
+        engine = game_manager.active_games.get(table_id)
+        if not engine or engine.is_game_over():
+            return
+
+        current_player = engine.get_current_player_id()
+        if not current_player:
+            return
+
+        from app.game_logic.deck_engine import DeckEngine
+        from app.game_logic.dice_engine import DiceEngine
+
+        if isinstance(engine, DeckEngine):
+            hand = engine.hands.get(current_player, [])
+            if hand:
+                # Auto-play a random card
+                count = min(len(hand), random.randint(1, min(3, len(hand))))
+                indices = random.sample(range(len(hand)), count)
+                events = engine.handle_action(current_player, "play_cards", {"cards": indices})
+            elif engine.last_play is not None:
+                # No cards, must call liar
+                events = engine.handle_action(current_player, "call_liar", {})
+            else:
+                return
+        elif isinstance(engine, DiceEngine):
+            if engine.current_bid is not None:
+                # Auto-challenge
+                events = engine.handle_action(current_player, "challenge_bid", {})
+            else:
+                # First bid — auto-bid 1x of a random face
+                events = engine.handle_action(current_player, "place_bid", {
+                    "quantity": 1, "face_value": random.randint(2, 6)
+                })
+        else:
+            return
+
+        await _send_events(events, table_id)
+    except asyncio.CancelledError:
+        pass
+    finally:
+        _turn_timers.pop(table_id, None)
+
+
+def _cancel_turn_timer(table_id: str):
+    task = _turn_timers.pop(table_id, None)
+    if task:
+        task.cancel()
+
+
+def _start_turn_timer(table_id: str):
+    _cancel_turn_timer(table_id)
+    _turn_timers[table_id] = asyncio.create_task(_turn_timeout(table_id))
 
 
 def _build_table_state(table) -> dict:
@@ -82,19 +146,19 @@ async def websocket_endpoint(websocket: WebSocket, table_id: str, session_id: st
         player = next((p for p in table.players if p.session_id == session_id), None)
         if player:
             player.is_connected = True
-        elif table.status == "waiting" and len(table.players) < table.max_players:
+        elif table.status == "waiting":
             # Auto-join: player arrived via invite link without HTTP join
             from app.routers.lobby import sessions
             session_data = sessions.get(session_id)
             if session_data:
                 nickname = session_data["nickname"]
                 avatar = session_data.get("avatar", "fox")
-                from app.models.player import Player
-                table.players.append(Player(session_id=session_id, nickname=nickname, avatar=avatar))
-                await connection_manager.broadcast_to_table(table_id, ServerEvent(
-                    event="player_joined",
-                    data={"session_id": session_id, "nickname": nickname, "avatar": avatar}
-                ), exclude={session_id})
+                joined_table = await table_manager.join_table(table_id, session_id, nickname, avatar)
+                if joined_table:
+                    await connection_manager.broadcast_to_table(table_id, ServerEvent(
+                        event="player_joined",
+                        data={"session_id": session_id, "nickname": nickname, "avatar": avatar}
+                    ), exclude={session_id})
 
     try:
         # Send initial table state
@@ -133,7 +197,7 @@ async def websocket_endpoint(websocket: WebSocket, table_id: str, session_id: st
                 _pending_removals[session_id] = task
 
 async def _send_events(events: list[tuple[str, ServerEvent]], table_id: str):
-    """Send a list of (target, event) tuples, then clean up if game is over."""
+    """Send a list of (target, event) tuples, then manage turn timer and cleanup."""
     for target, evt in events:
         if target == "broadcast":
             await connection_manager.broadcast_to_table(table_id, evt)
@@ -143,6 +207,7 @@ async def _send_events(events: list[tuple[str, ServerEvent]], table_id: str):
     # Check if game just ended — delay cleanup so clients can see the game over screen
     engine = game_manager.active_games.get(table_id)
     if engine and engine.is_game_over():
+        _cancel_turn_timer(table_id)
         async def _delayed_game_cleanup():
             await asyncio.sleep(15)
             game_manager.end_game(table_id)
@@ -152,6 +217,9 @@ async def _send_events(events: list[tuple[str, ServerEvent]], table_id: str):
                 table_id, ServerEvent(event="table_closed", data={})
             )
         asyncio.create_task(_delayed_game_cleanup())
+    elif engine:
+        # Game still active — restart turn timer for the new current player
+        _start_turn_timer(table_id)
 
 
 async def handle_client_event(event: ClientEvent, session_id: str, table_id: str):
