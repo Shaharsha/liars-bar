@@ -46,17 +46,25 @@ jobs:
       - name: Trigger Render deploy
         id: trigger
         run: |
-          DEPLOY=$(curl -sf -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          DEPLOY=$(curl -s -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
             -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d '{"clearCache":"do_not_clear"}')
-          echo "deploy_id=$(echo "$DEPLOY" | jq -r '.deploy.id // .id')" >> "$GITHUB_OUTPUT"
+          DEPLOY_ID=$(echo "$DEPLOY" | jq -r '.deploy.id // .id // empty')
+          if [ -z "$DEPLOY_ID" ]; then
+            echo "POST returned no deploy ID, fetching latest deploy..."
+            sleep 2
+            DEPLOY_ID=$(curl -s "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys?limit=1" \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.[0].deploy.id // .[0].id')
+          fi
+          echo "deploy_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
+          echo "Tracking deploy: $DEPLOY_ID"
 
       - name: Wait for deploy
         run: |
           for i in $(seq 1 60); do
-            STATUS=$(curl -sf "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys/${{ steps.trigger.outputs.deploy_id }}" \
-              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.deploy.status // .status')
+            STATUS=$(curl -s "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys/${{ steps.trigger.outputs.deploy_id }}" \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.deploy.status // .status // empty')
             echo "Attempt $i: $STATUS"
             case "$STATUS" in
               live) echo "Deploy successful!"; exit 0 ;;
