@@ -27,8 +27,8 @@ function RevolverSVG({
 }) {
   const cylCx = 72
   const cylCy = 48
-  const chamberOrbitR = 18
-  const chamberR = 5.5
+  const chamberOrbitR = 17
+  const chamberR = 5
 
   return (
     <svg
@@ -37,147 +37,251 @@ function RevolverSVG({
       style={hammerFall && !survived ? { animation: 'gun-recoil 0.4s ease-out' } : undefined}
     >
       <defs>
-        <linearGradient id="barrel-metal" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#52525e" />
-          <stop offset="30%" stopColor="#3a3a4a" />
-          <stop offset="70%" stopColor="#2e2e3e" />
-          <stop offset="100%" stopColor="#3a3a4a" />
+        {/* Blued steel — 7-stop dark with subtle blue tint */}
+        <linearGradient id="blued-steel" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1a1a2e" />
+          <stop offset="15%" stopColor="#2a2a40" />
+          <stop offset="35%" stopColor="#3d3d58" />
+          <stop offset="50%" stopColor="#4a4a6a" />
+          <stop offset="65%" stopColor="#3d3d58" />
+          <stop offset="85%" stopColor="#2a2a40" />
+          <stop offset="100%" stopColor="#1a1a2e" />
         </linearGradient>
-        <linearGradient id="frame-metal" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#42424e" />
-          <stop offset="100%" stopColor="#2a2a3a" />
+        {/* Gunmetal frame — neutral dark chrome */}
+        <linearGradient id="gunmetal" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2C3539" />
+          <stop offset="20%" stopColor="#3a4248" />
+          <stop offset="40%" stopColor="#4a5560" />
+          <stop offset="50%" stopColor="#556068" />
+          <stop offset="60%" stopColor="#4a5560" />
+          <stop offset="80%" stopColor="#3a4248" />
+          <stop offset="100%" stopColor="#2C3539" />
         </linearGradient>
-        <linearGradient id="wood-grain" x1="0" y1="0" x2="0.3" y2="1">
-          <stop offset="0%" stopColor="#6a4a30" />
-          <stop offset="50%" stopColor="#5a3a20" />
-          <stop offset="100%" stopColor="#4a2a15" />
+        {/* Barrel top specular */}
+        <linearGradient id="barrel-spec" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.14)" />
+          <stop offset="50%" stopColor="rgba(255,255,255,0.04)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
         </linearGradient>
+        {/* Dark walnut grip — 5-stop rich wood */}
+        <linearGradient id="walnut" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0%" stopColor="#6c3919" />
+          <stop offset="25%" stopColor="#854c23" />
+          <stop offset="50%" stopColor="#7a4420" />
+          <stop offset="75%" stopColor="#5d3218" />
+          <stop offset="100%" stopColor="#4a2a12" />
+        </linearGradient>
+        {/* Cylinder face — radial for curved-metal depth */}
+        <radialGradient id="cyl-face" cx="0.4" cy="0.35" r="0.65">
+          <stop offset="0%" stopColor="#3a3a50" />
+          <stop offset="60%" stopColor="#2a2a3e" />
+          <stop offset="100%" stopColor="#1a1a2a" />
+        </radialGradient>
+        {/* Chamber radials */}
+        <radialGradient id="ch-empty">
+          <stop offset="0%" stopColor="#08080f" />
+          <stop offset="80%" stopColor="#0a0a14" />
+          <stop offset="100%" stopColor="#1a1a28" />
+        </radialGradient>
+        <radialGradient id="ch-fired">
+          <stop offset="0%" stopColor="rgba(212,168,83,0.85)" />
+          <stop offset="60%" stopColor="rgba(212,168,83,0.5)" />
+          <stop offset="100%" stopColor="rgba(180,140,60,0.25)" />
+        </radialGradient>
+        <radialGradient id="ch-fatal">
+          <stop offset="0%" stopColor="#ff4444" />
+          <stop offset="50%" stopColor="#E53E3E" />
+          <stop offset="100%" stopColor="#aa2222" />
+        </radialGradient>
+        {/* Muzzle flash radial */}
+        <radialGradient id="mz-flash">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="20%" stopColor="#FFE4A0" />
+          <stop offset="50%" stopColor="#F5C563" />
+          <stop offset="80%" stopColor="#E8872A" />
+          <stop offset="100%" stopColor="rgba(229,62,62,0)" />
+        </radialGradient>
+        {/* Soft drop shadow */}
+        <filter id="gun-shadow" x="-3%" y="-3%" width="110%" height="115%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#000" floodOpacity="0.45" />
+        </filter>
       </defs>
 
-      {/* Barrel */}
-      <rect x="95" y="36" width="138" height="14" rx="2" fill="url(#barrel-metal)" />
-      <rect x="95" y="40" width="138" height="6" rx="1" fill="#2a2a35" opacity="0.5" />
-      {/* Top rib */}
-      <rect x="95" y="34" width="138" height="3" rx="1" fill="#4a4a5a" />
-      {/* Metallic highlight */}
-      <rect x="95" y="35" width="138" height="1" rx="0.5" fill="rgba(255,255,255,0.06)" />
-      {/* Front sight */}
-      <polygon points="230,30 234,30 232,36" fill="#5a5a6a" />
-      {/* Ejector rod */}
-      <rect x="95" y="50" width="100" height="3" rx="1" fill="#3a3a4a" />
-      <circle cx="195" cy="51.5" r="2.5" fill="#4a4a5a" />
+      <g filter="url(#gun-shadow)">
+        {/* ═══ BARREL ═══ */}
+        <path d="M94 35 L232 35 Q235 35 235 38 L235 51 Q235 54 232 54 L94 54 Z" fill="url(#blued-steel)" />
+        {/* Barrel undercut shadow */}
+        <rect x="94" y="49" width="141" height="5" rx="1" fill="#1a1a28" opacity="0.35" />
+        {/* Ventilated rib */}
+        <rect x="94" y="32" width="141" height="4" rx="1.5" fill="url(#gunmetal)" />
+        {/* Rib serrations */}
+        {Array.from({ length: 18 }).map((_, i) => (
+          <line key={`r${i}`} x1={100 + i * 7.5} y1="32" x2={100 + i * 7.5} y2="36" stroke="#1a1a2e" strokeWidth="0.6" opacity="0.5" />
+        ))}
+        {/* Barrel specular highlight */}
+        <rect x="94" y="36" width="141" height="1.5" rx="0.5" fill="url(#barrel-spec)" />
+        {/* Front sight — ramped blade */}
+        <path d="M230 28 L234 28 L233 35 L231 35 Z" fill="#4a4a5a" />
+        <path d="M231 29 L233 29 L232.5 34 L231.5 34 Z" fill="rgba(255,255,255,0.07)" />
+        {/* Ejector rod housing */}
+        <rect x="94" y="54" width="95" height="2.5" rx="1" fill="#2a2a3e" />
+        <circle cx="189" cy="55.25" r="2" fill="#3a3a4e" stroke="#4a4a5a" strokeWidth="0.3" />
 
-      {/* Frame body */}
-      <path
-        d="M35 28 L95 28 L95 56 L88 56 L82 100 L55 100 L52 66 L35 56 Z"
-        fill="url(#frame-metal)"
-        stroke="#4a4a5a"
-        strokeWidth="0.5"
-      />
+        {/* ═══ FRAME ═══ */}
+        <path
+          d="M30 26 Q32 24 95 26 L95 56 L88 56 Q86 56 85 58 L80 100 Q79 103 76 103 L58 103 Q55 103 54.5 100 L51 65 Q50 60 48 58 L33 56 Q30 54 30 50 Z"
+          fill="url(#gunmetal)" stroke="#4a4a5a" strokeWidth="0.4"
+        />
+        {/* Frame top-edge highlight */}
+        <path d="M34 27 Q36 25.5 95 27" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="0.8" />
+        {/* Frame panel line */}
+        <line x1="92" y1="30" x2="92" y2="55" stroke="#3a3a4a" strokeWidth="0.5" opacity="0.5" />
 
-      {/* Cylinder window (oval cutout) */}
-      <ellipse cx={cylCx} cy={cylCy} rx="26" ry="20" fill="#0a0a14" stroke="#4a4a5a" strokeWidth="1" />
+        {/* ═══ CYLINDER WINDOW ═══ */}
+        <ellipse cx={cylCx} cy={cylCy} rx="26" ry="21" fill="#06060c" />
 
-      {/* Cylinder (rotates inside window) */}
-      <g
-        style={
-          spinning
-            ? {
-                animation: 'cylinder-spin 2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards',
-                transformOrigin: `${cylCx}px ${cylCy}px`,
-              }
-            : undefined
-        }
-      >
-        <circle cx={cylCx} cy={cylCy} r={chamberOrbitR + 3} fill="#1a1a2a" stroke="#3a3a4a" strokeWidth="0.5" />
-        {/* Center pin */}
-        <circle cx={cylCx} cy={cylCy} r="3" fill="#2a2a3a" stroke="#3a3a4a" strokeWidth="0.5" />
-        {/* Chambers */}
-        {Array.from({ length: chambers }).map((_, i) => {
-          const angle = (i * 360) / chambers - 90
-          const cx = cylCx + chamberOrbitR * Math.cos((angle * Math.PI) / 180)
-          const cy = cylCy + chamberOrbitR * Math.sin((angle * Math.PI) / 180)
-          const isFatal = i === shotsFired - 1 && !survived
-          const isFired = i < shotsFired
-          return (
-            <g key={i}>
-              <circle
-                cx={cx}
-                cy={cy}
-                r={chamberR}
-                fill={isFatal ? '#E53E3E' : isFired ? 'rgba(212,168,83,0.7)' : '#0a0a14'}
-                stroke={isFatal ? '#ff4444' : isFired ? '#D4A853' : '#3a3a4a'}
-                strokeWidth="1"
+        {/* ═══ CYLINDER (rotates) ═══ */}
+        <g
+          style={
+            spinning
+              ? { animation: 'cylinder-spin 2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards', transformOrigin: `${cylCx}px ${cylCy}px` }
+              : undefined
+          }
+        >
+          {/* Cylinder body */}
+          <circle cx={cylCx} cy={cylCy} r={chamberOrbitR + 4} fill="url(#cyl-face)" />
+          <circle cx={cylCx} cy={cylCy} r={chamberOrbitR + 4} fill="none" stroke="#4a4a5e" strokeWidth="0.6" />
+          <circle cx={cylCx} cy={cylCy} r={chamberOrbitR + 3} fill="none" stroke="#1a1a2a" strokeWidth="0.3" />
+          {/* Fluting lines between chambers */}
+          {Array.from({ length: chambers }).map((_, i) => {
+            const a = ((i * 360) / chambers - 90 + 180 / chambers) * (Math.PI / 180)
+            return (
+              <line key={`f${i}`}
+                x1={cylCx + (chamberOrbitR - 4) * Math.cos(a)} y1={cylCy + (chamberOrbitR - 4) * Math.sin(a)}
+                x2={cylCx + (chamberOrbitR + 3) * Math.cos(a)} y2={cylCy + (chamberOrbitR + 3) * Math.sin(a)}
+                stroke="#1a1a2a" strokeWidth="0.5" opacity="0.4"
               />
-              {isFatal && (
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={chamberR + 2}
-                  fill="none"
-                  stroke="#E53E3E"
-                  strokeWidth="1"
-                  opacity="0.5"
-                >
-                  <animate attributeName="r" from={`${chamberR}`} to={`${chamberR + 5}`} dur="1s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" from="0.5" to="0" dur="1s" repeatCount="indefinite" />
-                </circle>
-              )}
-              {!isFired && <circle cx={cx} cy={cy} r="1.5" fill="#3a3a4a" />}
-            </g>
-          )
-        })}
+            )
+          })}
+          {/* Center pin */}
+          <circle cx={cylCx} cy={cylCy} r="3.5" fill="#1a1a2a" />
+          <circle cx={cylCx} cy={cylCy} r="2.5" fill="#2a2a3e" stroke="#3a3a4e" strokeWidth="0.4" />
+          <circle cx={cylCx} cy={cylCy} r="1" fill="#3a3a4e" />
+          {/* Chambers */}
+          {Array.from({ length: chambers }).map((_, i) => {
+            const angle = (i * 360) / chambers - 90
+            const cx = cylCx + chamberOrbitR * Math.cos((angle * Math.PI) / 180)
+            const cy = cylCy + chamberOrbitR * Math.sin((angle * Math.PI) / 180)
+            const isFatal = i === shotsFired - 1 && !survived
+            const isFired = i < shotsFired
+            return (
+              <g key={i}>
+                {/* Bevel ring */}
+                <circle cx={cx} cy={cy} r={chamberR + 1} fill="none"
+                  stroke={isFatal ? '#ff4444' : isFired ? '#D4A853' : '#2a2a3e'} strokeWidth="0.6" />
+                {/* Chamber hole */}
+                <circle cx={cx} cy={cy} r={chamberR}
+                  fill={isFatal ? 'url(#ch-fatal)' : isFired ? 'url(#ch-fired)' : 'url(#ch-empty)'}
+                  stroke={isFatal ? '#ff6666' : isFired ? '#D4A853' : '#2a2a3e'} strokeWidth="0.8" />
+                {/* Unfired primer detail */}
+                {!isFired && (
+                  <>
+                    <circle cx={cx} cy={cy} r="2" fill="#1a1a28" />
+                    <circle cx={cx} cy={cy} r="1" fill="#2a2a3e" stroke="#3a3a4a" strokeWidth="0.3" />
+                  </>
+                )}
+                {/* Fatal glow pulse */}
+                {isFatal && (
+                  <circle cx={cx} cy={cy} r={chamberR + 2} fill="none" stroke="#E53E3E" strokeWidth="1" opacity="0.5">
+                    <animate attributeName="r" from={`${chamberR}`} to={`${chamberR + 6}`} dur="1s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" from="0.6" to="0" dur="1s" repeatCount="indefinite" />
+                  </circle>
+                )}
+                {/* Fired residue */}
+                {isFired && !isFatal && <circle cx={cx} cy={cy} r="1.5" fill="#D4A853" opacity="0.15" />}
+              </g>
+            )
+          })}
+        </g>
+        {/* Cylinder window inner shadow ring */}
+        <ellipse cx={cylCx} cy={cylCy} rx="26" ry="21" fill="none" stroke="#000" strokeWidth="2" opacity="0.3" />
+
+        {/* ═══ HAMMER ═══ */}
+        <g
+          style={
+            hammerFall
+              ? { animation: 'hammer-fall 0.15s ease-in forwards', transformOrigin: '38px 28px' }
+              : undefined
+          }
+        >
+          <path d="M34 28 Q33 26 28 18 L26 14 Q25 12 27 11 L32 11 Q34 11 34 13 L38 24 Z"
+            fill="url(#gunmetal)" stroke="#5a5a6a" strokeWidth="0.4" />
+          {/* Spur */}
+          <rect x="24" y="10" width="10" height="2.5" rx="0.5" fill="#4a5560" transform="rotate(-12 29 11.25)" />
+          {/* Spur serrations */}
+          {[0, 1, 2, 3].map((i) => (
+            <line key={`s${i}`} x1={25.5 + i * 2} y1="9.5" x2={25.5 + i * 2} y2="12"
+              stroke="#2C3539" strokeWidth="0.5" opacity="0.6" transform="rotate(-12 29 11.25)" />
+          ))}
+        </g>
+
+        {/* ═══ GRIP ═══ */}
+        <path
+          d="M54 56 L84 56 Q85 56 85 57 L80 100 Q79 104 76 104 L58 104 Q55 104 54 100 L49 65 Q48 60 50 57 Z"
+          fill="url(#walnut)" stroke="#3a2210" strokeWidth="0.5"
+        />
+        {/* Curved wood grain */}
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <path key={`g${i}`}
+            d={`M${55 + i * 0.2} ${61 + i * 5} Q${67} ${60 + i * 5 + (i % 2 ? 1.2 : -1)} ${80 - i * 0.4} ${61 + i * 5}`}
+            fill="none" stroke="#3a1a08" strokeWidth="0.4" opacity={0.25 + (i % 3) * 0.1} />
+        ))}
+        {/* Grip medallion */}
+        <circle cx="67" cy="80" r="4" fill="#4a2a12" stroke="#D4A853" strokeWidth="0.5" opacity="0.6" />
+        <circle cx="67" cy="80" r="2.5" fill="none" stroke="#D4A853" strokeWidth="0.3" opacity="0.4" />
+        <circle cx="67" cy="80" r="1" fill="#D4A853" opacity="0.35" />
+        {/* Grip top highlight */}
+        <path d="M55 57 L83 57" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.8" />
+
+        {/* ═══ TRIGGER GUARD ═══ */}
+        <path d="M63 56 Q61 68 63 76 Q65 82 72 82 Q79 82 81 76 L84 56"
+          fill="none" stroke="url(#gunmetal)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M64 58 Q62 68 64 75" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
+        {/* Trigger */}
+        <path d="M71 56 L71.5 68 Q71.5 72 70 73 Q68.5 74 67 72 L67 56" fill="#4a5560" stroke="#5a6570" strokeWidth="0.3" />
+        {/* Trigger serrations */}
+        <line x1="68" y1="62" x2="71" y2="62" stroke="#2C3539" strokeWidth="0.4" opacity="0.5" />
+        <line x1="68" y1="64.5" x2="71" y2="64.5" stroke="#2C3539" strokeWidth="0.4" opacity="0.5" />
+        <line x1="68" y1="67" x2="71" y2="67" stroke="#2C3539" strokeWidth="0.4" opacity="0.5" />
       </g>
 
-      {/* Hammer (animates on result) */}
-      <g
-        style={
-          hammerFall
-            ? { animation: 'hammer-fall 0.15s ease-in forwards', transformOrigin: '38px 28px' }
-            : undefined
-        }
-      >
-        <path d="M35 28 L24 16 L30 12 L40 24" fill="#3a3a4a" stroke="#5a5a6a" strokeWidth="0.5" />
-        <rect
-          x="22"
-          y="11"
-          width="10"
-          height="3"
-          rx="0.5"
-          fill="#4a4a5a"
-          transform="rotate(-15 27 12.5)"
-        />
-      </g>
-
-      {/* Grip */}
-      <path d="M55 56 L82 56 L78 100 L58 100 Z" fill="url(#wood-grain)" stroke="#7a5a3a" strokeWidth="0.5" />
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <line
-          key={i}
-          x1={57 + i * 0.3}
-          y1={62 + i * 6}
-          x2={78 - i * 0.5}
-          y2={62 + i * 6}
-          stroke="#3a2010"
-          strokeWidth="0.4"
-          opacity="0.5"
-        />
-      ))}
-      {/* Grip medallion */}
-      <circle cx="68" cy="78" r="3.5" fill="#5a3a20" stroke="#D4A853" strokeWidth="0.4" opacity="0.5" />
-      <circle cx="68" cy="78" r="1" fill="#D4A853" opacity="0.3" />
-
-      {/* Trigger guard */}
-      <path d="M62 56 Q62 78, 76 78 L82 56" fill="none" stroke="#4a4a5a" strokeWidth="1.5" />
-      {/* Trigger */}
-      <path d="M70 56 L70 70 L68 72 L66 70 L66 56" fill="#5a5a6a" />
-
-      {/* Muzzle flash on death */}
+      {/* ═══ MUZZLE FLASH ═══ */}
       {showFlash && (
-        <circle cx="238" cy="43" r="6" fill="#F5C563" opacity="0.9">
-          <animate attributeName="r" from="4" to="22" dur="0.3s" fill="freeze" />
-          <animate attributeName="opacity" from="0.9" to="0" dur="0.3s" fill="freeze" />
-        </circle>
+        <g>
+          {/* White-hot core */}
+          <circle cx="237" cy="44" r="4" fill="white" opacity="0.95">
+            <animate attributeName="r" from="3" to="12" dur="0.25s" fill="freeze" />
+            <animate attributeName="opacity" from="0.95" to="0" dur="0.25s" fill="freeze" />
+          </circle>
+          {/* Fiery glow */}
+          <circle cx="237" cy="44" r="6" fill="url(#mz-flash)" opacity="0.85">
+            <animate attributeName="r" from="4" to="28" dur="0.35s" fill="freeze" />
+            <animate attributeName="opacity" from="0.85" to="0" dur="0.35s" fill="freeze" />
+          </circle>
+          {/* Spark rays */}
+          {[0, 40, 80, 140, 180, 220, 280, 320].map((deg) => {
+            const rad = (deg * Math.PI) / 180
+            return (
+              <line key={deg} x1="237" y1="44"
+                x2={237 + 8 * Math.cos(rad)} y2={44 + 8 * Math.sin(rad)}
+                stroke="#F5C563" strokeWidth="1" opacity="0.7" strokeLinecap="round">
+                <animate attributeName="x2" from={`${237 + 4 * Math.cos(rad)}`} to={`${237 + 22 * Math.cos(rad)}`} dur="0.3s" fill="freeze" />
+                <animate attributeName="y2" from={`${44 + 4 * Math.sin(rad)}`} to={`${44 + 22 * Math.sin(rad)}`} dur="0.3s" fill="freeze" />
+                <animate attributeName="opacity" from="0.7" to="0" dur="0.3s" fill="freeze" />
+              </line>
+            )
+          })}
+        </g>
       )}
     </svg>
   )
@@ -311,29 +415,29 @@ export default function GamePage() {
   // Auto-clear liar called flash after 1.2s
   useEffect(() => {
     if (liarCalled) {
-      const t = setTimeout(() => useGameStore.getState().setLiarCalled(null), 1200)
+      const t = setTimeout(() => useGameStore.getState().setLiarCalled(null), 2000)
       return () => clearTimeout(t)
     }
   }, [liarCalled])
 
-  // Roulette: 3.5s phases + 3s result viewing = 6.5s total
+  // Roulette: 3.5s phases + 5s result viewing = 8.5s total
   useEffect(() => {
     if (rouletteResult) {
-      const t = setTimeout(clearOverlays, 6500)
+      const t = setTimeout(clearOverlays, 8500)
       return () => clearTimeout(t)
     }
   }, [rouletteResult, clearOverlays])
 
   useEffect(() => {
     if (revealedCards) {
-      const t = setTimeout(clearOverlays, 3500)
+      const t = setTimeout(clearOverlays, 5500)
       return () => clearTimeout(t)
     }
   }, [revealedCards, clearOverlays])
 
   useEffect(() => {
     if (revealedDice) {
-      const t = setTimeout(clearOverlays, 3500)
+      const t = setTimeout(clearOverlays, 5500)
       return () => clearTimeout(t)
     }
   }, [revealedDice, clearOverlays])
@@ -604,6 +708,13 @@ function DeckBoard({ gameState, isMyTurn }: { gameState: DeckGameState; isMyTurn
             className="flex-1 bg-accent-red/10 border-2 border-accent-red/60 text-accent-red rounded-2xl py-4 font-accent font-bold text-xl uppercase active:scale-[0.97] transition-all disabled:opacity-20"
             style={{ animation: 'pulse-glow-red 2s infinite' }}
           >
+            <svg viewBox="0 0 20 14" className="inline-block w-5 h-3.5 mr-1.5 -mt-0.5" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="4" width="14" height="3.5" rx="0.5" fill="currentColor" opacity="0.85" />
+              <circle cx="5.5" cy="5.75" r="3.5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.7" />
+              <path d="M7 8.5 L6 12.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
+              <path d="M5.5 8.5 Q7 9.5 8.5 8.5" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.5" />
+              <rect x="17" y="3" width="1.5" height="2" rx="0.3" fill="currentColor" opacity="0.6" />
+            </svg>
             LIAR!
           </button>
         )}
@@ -780,7 +891,7 @@ function LiarCallOverlay() {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
-      style={{ animation: 'liar-bg-flash 1.2s ease-out forwards' }}
+      style={{ animation: 'liar-bg-flash 2s ease-out forwards' }}
     >
       {/* Red edge vignette */}
       <div className="absolute inset-0" style={{ boxShadow: 'inset 0 0 80px rgba(229, 62, 62, 0.4)' }} />
