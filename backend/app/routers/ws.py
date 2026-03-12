@@ -140,11 +140,18 @@ async def _send_events(events: list[tuple[str, ServerEvent]], table_id: str):
         else:
             await connection_manager.send_to_player(target, evt)
 
-    # Check if game just ended — clean up table and engine
+    # Check if game just ended — delay cleanup so clients can see the game over screen
     engine = game_manager.active_games.get(table_id)
     if engine and engine.is_game_over():
-        game_manager.end_game(table_id)
-        table_manager.delete_table(table_id)
+        async def _delayed_game_cleanup():
+            await asyncio.sleep(15)
+            game_manager.end_game(table_id)
+            table_manager.delete_table(table_id)
+            # Notify any still-connected clients
+            await connection_manager.broadcast_to_table(
+                table_id, ServerEvent(event="table_closed", data={})
+            )
+        asyncio.create_task(_delayed_game_cleanup())
 
 
 async def handle_client_event(event: ClientEvent, session_id: str, table_id: str):
